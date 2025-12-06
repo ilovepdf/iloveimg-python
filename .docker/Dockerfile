@@ -34,6 +34,8 @@ ENV PATH="/home/appuser/.local/bin:$PATH"
 # Install package in user site to validate non-root installs
 RUN pip install --user .
 
+RUN rm -rf iloveimg
+
 # Verify imports resolve from user site in normal mode (outside project workspace)
 RUN cd / && PYTHONPATH="" python - <<'PY'
 import iloveimg

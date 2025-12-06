@@ -18,10 +18,10 @@ Before running Docker containers, you must set up the required environment varia
 1. Copy the sample environment file:
 
    ```bash
-   cp .docker/.env.sample .docker/.env
+   cp .env.sample .env
    ```
 
-2. Edit `.docker/.env` and set the following variables:
+2. Edit `.env` and set the following variables:
 
    - `ILOVEIMG_PUBLIC_KEY` – Your iLoveIMG project public key
    - `ILOVEIMG_SECRET_KEY` – Your iLoveIMG project secret key
@@ -74,7 +74,7 @@ Available services: `python39`, `python310`, `python311`, `python312`
 
 ```bash
 docker-compose -f .docker/docker-compose.yml run python39 pytest tests/unit
-docker-compose -f .docker/docker-compose.yml run python39 pytest tests/integration
+docker-compose -f .docker/docker-compose.yml run --env-file .docker/.env python39 pytest tests/integration
 ```
 
 #### Run a Specific Test File
@@ -82,6 +82,21 @@ docker-compose -f .docker/docker-compose.yml run python39 pytest tests/integrati
 ```bash
 docker-compose -f .docker/docker-compose.yml run python39 pytest tests/unit/test_compress_task.py
 ```
+
+---
+## Image validation behavior
+
+The Docker images validate the package installation in two modes:
+
+- Global installation (system site-packages): the image installs the package
+  globally and verifies imports in isolated mode to ensure resolution from
+  `site-packages` or `dist-packages`.
+- User-site installation (`pip install --user`): the image also installs the
+  package in the user site and verifies that a regular Python process resolves
+  imports from `~/.local/...`.
+
+This dual validation ensures the library works correctly for both privileged and
+non-privileged environments.
 
 ---
 
