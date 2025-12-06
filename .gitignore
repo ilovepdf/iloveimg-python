@@ -1,0 +1,10 @@
+*.pyc
+*.egg-info
+.env
+.MyFolder
+venv
+.venv
+.pytest_cache
+.ropeproject
+.egg-info
+outfiles/
