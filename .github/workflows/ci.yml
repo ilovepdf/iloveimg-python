@@ -96,8 +96,11 @@ jobs:
         run: pip install .
 
       - name: Verify import origin
+        env:
+          PYTHONPATH: ""
+          PYTHONNOUSERSITE: "1"
         run: |
-          python - <<'PY'
+          python -I - <<'PY'
           import iloveimg
           p = iloveimg.__file__
           print(p)
@@ -171,8 +174,11 @@ jobs:
           fi
 
       - name: Verify import origin
+        env:
+          PYTHONPATH: ""
+          PYTHONNOUSERSITE: "1"
         run: |
-          python - <<'PY'
+          python -I - <<'PY'
           import iloveimg
           p = iloveimg.__file__
           print(p)
