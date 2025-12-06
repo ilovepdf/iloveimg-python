@@ -1,0 +1,131 @@
+name: Python CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container:
+      image: catthehacker/ubuntu:act-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.12"]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: pip install -r requirements_dev.txt
+
+      - name: Lint with flake8
+        run: flake8 .
+
+      - name: Check formatting with black
+        run: black --check .
+
+      - name: Check imports with isort
+        run: isort --check-only .
+
+      - name: Lint with pylint
+        run: pylint iloveimg/ --fail-under=8.0
+
+  unit_test:
+    runs-on: ubuntu-latest
+    container:
+      image: catthehacker/ubuntu:act-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.12"]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: pip install -r requirements_test.txt
+
+      - name: Run unit tests with coverage
+        run: |
+          pytest tests/unit \
+            --cov=iloveimg \
+            --cov-report=xml \
+            --cov-report=term \
+            --cov-fail-under=75 \
+            --timeout=30 \
+            -v \
+            --tb=short
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+        continue-on-error: true
+
+  integration_test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'))
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.12"]
+      fail-fast: false
+    needs: [lint, unit_test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: pip install -r requirements_test.txt
+
+      - name: Verify required secrets
+        run: |
+          if [ -z "${{ secrets.ILOVEIMG_PUBLIC_KEY }}" ] || \
+             [ -z "${{ secrets.ILOVEIMG_SECRET_KEY }}" ]; then
+            echo "::error::Missing required secrets: ILOVEIMG_PUBLIC_KEY or ILOVEIMG_SECRET_KEY"
+            exit 1
+          fi
+
+      - name: Run integration tests
+        env:
+          ILOVEIMG_PUBLIC_KEY: ${{ secrets.ILOVEIMG_PUBLIC_KEY }}
+          ILOVEIMG_SECRET_KEY: ${{ secrets.ILOVEIMG_SECRET_KEY }}
+        run: |
+          pytest tests/integration \
+            -v \
+            --tb=short \
+            --maxfail=3 \
+            --timeout=60
