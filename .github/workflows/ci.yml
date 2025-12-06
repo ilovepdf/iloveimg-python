@@ -21,7 +21,7 @@ jobs:
         python-version: ["3.9", "3.12"]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Python with pip cache (GitHub only)
         if: ${{ contains(env.GITHUB_SERVER_URL, 'github.com') }}
@@ -33,7 +33,7 @@ jobs:
 
       - name: Setup Python (no cache for Gitea/others)
         if: ${{ !contains(env.GITHUB_SERVER_URL, 'github.com') }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache-dependency-path: requirements_dev.txt
@@ -69,7 +69,7 @@ jobs:
         python-version: ["3.9", "3.12"]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Python with pip cache (GitHub only)
         if: ${{ contains(env.GITHUB_SERVER_URL, 'github.com') }}
@@ -94,6 +94,16 @@ jobs:
 
       - name: Install package
         run: pip install .
+
+      - name: Validate VCS install of current ref (server/repo/branch)
+        run: |
+          if [ -n "${GITHUB_SERVER_URL}" ] && [ -n "${GITHUB_REPOSITORY}" ]; then
+            echo "Installing from VCS: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git@${{ github.ref_name }}"
+            pip install -U "git+${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git@${{ github.sha }}#egg=iloveimg"
+            python .github/workflows/test.py
+          else
+            echo "Skipping VCS install validation: missing server or repository env."
+          fi
 
       - name: Verify import origin
         env:
@@ -141,7 +151,7 @@ jobs:
       fail-fast: false
     needs: [lint, unit_test]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Python with pip cache (GitHub only)
         if: ${{ contains(env.GITHUB_SERVER_URL, 'github.com') }}
@@ -166,6 +176,15 @@ jobs:
 
       - name: Install package
         run: pip install .
+
+      - name: Validate VCS install of current ref (server/repo/branch)
+        run: |
+          if [ -n "${GITHUB_SERVER_URL}" ] && [ -n "${GITHUB_REPOSITORY}" ]; then
+            echo "Installing from VCS: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git@${{ github.ref_name }}"
+            pip install -U "git+${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git@${{ github.sha }}#egg=iloveimg"
+          else
+            echo "Skipping VCS install validation: missing server or repository env."
+          fi
 
       - name: Verify required secrets
         run: |
