@@ -129,6 +129,8 @@ jobs:
 
   integration_test:
     runs-on: ubuntu-latest
+    container:
+      image: catthehacker/ubuntu:act-latest
     timeout-minutes: 20
     if: |
       github.event_name == 'workflow_dispatch' ||
