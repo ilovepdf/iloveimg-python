@@ -11,8 +11,8 @@ WORKDIR /src
 COPY pyproject.toml setup.cfg ./
 COPY requirements.txt requirements_dev.txt requirements_test.txt ./
 
-# Install dependencies as root before switching to appuser
-RUN pip install --upgrade pip && \
+# Upgrade pip and install test dependencies as root
+RUN python -m pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements_test.txt
 
 # Copy source code and tests
@@ -20,21 +20,36 @@ COPY iloveimg ./iloveimg
 COPY tests ./tests
 COPY pytest.ini ./
 
-# Change ownership to appuser
-RUN chown -R appuser:appuser /src
+# Install the package system-wide (non-editable) before switching to non-root
+RUN pip install .
 
+# Change ownership to appuser and switch user
+RUN chown -R appuser:appuser /src
 USER appuser
 
 # Set Python environment variables
-ENV PYTHONPATH=/src
 ENV PYTHONUNBUFFERED=1
 ENV PATH="/home/appuser/.local/bin:$PATH"
 
-# Install package in development mode
-RUN pip install --user -e .
+# Install package in user site to validate non-root installs
+RUN pip install --user .
 
-# Verify imports work correctly
-RUN python -c "import iloveimg; print('✓ iloveimg import successful')"
+# Verify imports resolve from user site in normal mode (outside project workspace)
+RUN cd / && PYTHONPATH="" python - <<'PY'
+import iloveimg
+p = iloveimg.__file__
+print(p)
+assert '.local' in p, 'User-site install not used in normal mode.'
+PY
 
-# Default command: run all tests (JSON format for proper signal handling)
+# Verify imports come from the system installed package in isolated mode
+RUN python -I - <<'PY'
+import iloveimg
+p = iloveimg.__file__
+print(p)
+assert ('site-packages' in p) or ('dist-packages' in p), \
+    'Package not imported from system installation.'
+PY
+
+# Default command: run unit tests; integration requires API secrets to be provided
 CMD ["sh", "-c", "pytest tests/unit && pytest tests/integration"]
