@@ -23,7 +23,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python with pip cache (GitHub only)
+        if: ${{ env.GITHUB_ACTIONS == 'true' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+          cache-dependency-path: requirements_dev.txt
+
+      - name: Setup Python (no cache for Gitea/others)
+        if: ${{ env.GITHUB_ACTIONS != 'true' }}
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
@@ -62,7 +72,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python with pip cache (GitHub only)
+        if: ${{ env.GITHUB_ACTIONS == 'true' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+          cache-dependency-path: requirements_test.txt
+
+      - name: Setup Python (no cache for Gitea/others)
+        if: ${{ env.GITHUB_ACTIONS != 'true' }}
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
@@ -120,7 +140,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python with pip cache (GitHub only)
+        if: ${{ env.GITHUB_ACTIONS == 'true' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+          cache-dependency-path: requirements_test.txt
+
+      - name: Setup Python (no cache for Gitea/others)
+        if: ${{ env.GITHUB_ACTIONS != 'true' }}
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
