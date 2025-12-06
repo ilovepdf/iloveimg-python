@@ -82,7 +82,7 @@ jobs:
             --cov=iloveimg \
             --cov-report=xml \
             --cov-report=term \
-            --cov-fail-under=75 \
+            --cov-fail-under=85 \
             --timeout=30 \
             -v \
             --tb=short
