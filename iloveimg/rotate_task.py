@@ -4,7 +4,7 @@ Provides classes to configure and execute rotation of image files.
 Allows specifying rotation angles for each file.
 """
 
-from typing import Literal, Type
+from typing import Literal
 
 from .file import File
 from .task import Task
@@ -62,7 +62,7 @@ class RotateTask(Task):
     """
 
     _tool = "rotateimage"
-    cls_file: Type[RotateFile] = RotateFile
+    cls_file: type[RotateFile] = RotateFile
 
     def add_file(self, *args, **kwargs) -> RotateFile:
         """

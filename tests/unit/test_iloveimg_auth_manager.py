@@ -1,7 +1,5 @@
 """Unit tests for the IloveimgAuthManager class in the iloveimg module."""
 
-from typing import Optional
-
 import pytest
 from pytest_mock import MockerFixture
 
@@ -17,9 +15,7 @@ class IloveimgAuthManager:
     using the Iloveimg class internally.
     """
 
-    def __init__(
-        self, public_key: Optional[str] = None, secret_key: Optional[str] = None
-    ):
+    def __init__(self, public_key: str | None = None, secret_key: str | None = None):
         # Always provide a non-empty secret_key for testing purposes if not given
         public_key = public_key or "dummy_key"
         secret_key = secret_key or "dummy_secret"
@@ -27,8 +23,8 @@ class IloveimgAuthManager:
 
     def set_credentials(
         self,
-        public_key: Optional[str] = None,
-        secret_key: Optional[str] = None,
+        public_key: str | None = None,
+        secret_key: str | None = None,
     ):
         self._iloveimg.set_api_keys(public_key, secret_key)  # type: ignore
 

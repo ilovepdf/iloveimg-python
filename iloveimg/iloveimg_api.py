@@ -14,7 +14,7 @@ import secrets
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Tuple
 
 import jwt
 import requests
@@ -108,8 +108,8 @@ class AuthManager:
 
     secret_key: str
     public_key: str
-    token_cache: Optional[Tuple[str, int]] = None
-    token: Optional[str] = None
+    token_cache: Tuple[str, int] | None = None
+    token: str | None = None
 
 
 @dataclass
@@ -123,10 +123,10 @@ class ServerConfig:
         timeout_large (Optional[int]): Timeout for large operations.
     """
 
-    worker_server: Optional[str] = None
+    worker_server: str | None = None
     time_delay: int = DEFAULT_TIME_DELAY_SECONDS
     timeout: int = DEFAULT_TIMEOUT_SECONDS
-    timeout_large: Optional[int] = None
+    timeout_large: int | None = None
 
 
 @dataclass
@@ -139,7 +139,7 @@ class EncryptionConfig:
     """
 
     encrypted: bool = False
-    encrypt_key: Optional[str] = None
+    encrypt_key: str | None = None
 
 
 class RequestBuilder:
@@ -221,7 +221,7 @@ class RequestBuilder:
 
     def prepare_params(
         self,
-        params: Optional[Dict[str, Any]],
+        params: Dict[str, Any] | None,
         headers: Dict[str, str],
         endpoint: str,
     ) -> Dict[str, Any]:
@@ -347,7 +347,7 @@ class ErrorRouter:
 
     @staticmethod
     def _handle_upload_response(
-        response_body: Union[Dict[str, Any], str], response_code: int
+        response_body: Dict[str, Any] | str, response_code: int
     ) -> None:
         """Handle upload error responses.
 
@@ -508,7 +508,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
     _api_version = API_VERSION
 
     def __init__(
-        self, public_key: Optional[str] = None, secret_key: Optional[str] = None
+        self, public_key: str | None = None, secret_key: str | None = None
     ) -> None:
         super().__init__()
         if public_key is None:
@@ -536,7 +536,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
         self._error_router = ErrorRouter()
 
     @staticmethod
-    def _validate_api_key(key: Optional[str], key_name: str) -> None:
+    def _validate_api_key(key: str | None, key_name: str) -> None:
         """Validate that an API key is a non-empty string.
 
         Args:
@@ -745,7 +745,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
             return self.auth.token
 
         current_time = int(time.time())
-        token_dict: Dict[str, Union[int, str, None]] = {
+        token_dict: Dict[str, int | str | None] = {
             "iss": API_HOST,
             "aud": API_HOST,
             "iat": current_time - self.server.time_delay,
@@ -791,7 +791,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
         """
         return cls._start_server
 
-    def get_worker_server(self) -> Optional[str]:
+    def get_worker_server(self) -> str | None:
         """Get the worker server URL.
 
         Returns:
@@ -799,7 +799,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
         """
         return self.server.worker_server
 
-    def set_worker_server(self, worker_server: Optional[str]) -> None:
+    def set_worker_server(self, worker_server: str | None) -> None:
         """Set the worker server URL.
 
         Args:
@@ -816,7 +816,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
         """
         return self.encryption.encrypted
 
-    def get_encrypt_key(self) -> Optional[str]:
+    def get_encrypt_key(self) -> str | None:
         """Get the encryption key.
 
         Returns:
@@ -828,7 +828,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
         self,
         method: str,
         endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
+        params: Dict[str, Any] | None = None,
         start: bool = False,
     ) -> requests.Response:
         """Send a request to the iLoveIMG API.

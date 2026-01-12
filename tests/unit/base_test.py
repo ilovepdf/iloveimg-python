@@ -11,7 +11,6 @@ Provides a reusable fixture and structure for testing ILoveIMG tasks.
 """
 
 from abc import ABC
-from typing import Optional, Type
 
 import pytest
 
@@ -27,7 +26,7 @@ class AbstractUnitTaskElementTest(ABC):
     Subclasses must set `_task_class` to a concrete subclass of AbstractTaskElement.
 
     Attributes:
-        _task_class (Type): Concrete task element class to test.
+        _task_class (type): Concrete task element class to test.
         _check_payload_keys (bool): If True, check expected payload keys.
         _check_unexpected_keys (bool): If True, check for unexpected payload keys.
 
@@ -46,7 +45,7 @@ class AbstractUnitTaskElementTest(ABC):
                 assert my_task is not None
     """
 
-    _task_class: Type
+    _task_class: type
     _check_payload_keys = False
     _check_unexpected_keys = False
 
@@ -142,7 +141,7 @@ class AbstractUnitFileTest(AbstractUnitTaskElementTest):
     Subclasses must set `_task_class` to a concrete subclass of AbstractTaskElement.
 
     Attributes:
-        _task_class (Type): Concrete task element class to test.
+        _task_class (type): Concrete task element class to test.
         _check_payload_keys (bool): If True, check expected payload keys.
         _check_unexpected_keys (bool): If True, check for unexpected payload keys.
 
@@ -182,7 +181,7 @@ class AbstractUnitTaskTest(AbstractUnitTaskElementTest):
     to the tool name.
 
     Attributes:
-        _task_class (Type): Concrete task class to test.
+        _task_class (type): Concrete task class to test.
         _task_tool (str): Tool name for the task.
 
     Example:
@@ -198,7 +197,7 @@ class AbstractUnitTaskTest(AbstractUnitTaskElementTest):
     """
 
     # _task_class is inherited from AbstractUnitTaskElementTest
-    _task_tool: Optional[str] = None
+    _task_tool: str | None = None
 
     def _validate_task_class(self):
         super()._validate_task_class()

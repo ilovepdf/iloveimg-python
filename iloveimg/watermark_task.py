@@ -10,7 +10,9 @@ Example:
     element.text = "Sample Watermark"
 """
 
-from typing import List, Literal, Optional
+from __future__ import annotations
+
+from typing import List, Literal
 
 from .abstract_task_element import AbstractTaskElement, Payload
 from .file import File
@@ -107,10 +109,10 @@ class WatermarkElement(AbstractTaskElement):
         "server_filename": None,
     }
 
-    def __init__(self, parent_task: Optional["WatermarkTask"] = None):
+    def __init__(self, parent_task: "WatermarkTask | None" = None):
         super().__init__()
         self._parent_task = parent_task
-        self._file: Optional[File] = None
+        self._file: File | None = None
 
     @property
     def type(self) -> WatermarkType:
@@ -169,12 +171,12 @@ class WatermarkElement(AbstractTaskElement):
         self._set_attr("text", value)
 
     @property
-    def server_filename(self) -> Optional[str]:
+    def server_filename(self) -> str | None:
         """
         Gets the image identifier for image watermark.
 
         Returns:
-            Optional[str]: The image value. Default is None.
+            str | None: The image value. Default is None.
 
         Raises:
             TypeError: If watermark type is not "image".
@@ -615,14 +617,12 @@ class WatermarkTask(Task):
         super().__init__(*args, **kwargs)
         self.elements: List[WatermarkElement] = []
 
-    def add_element(
-        self, element: Optional[WatermarkElement] = None
-    ) -> WatermarkElement:
+    def add_element(self, element: WatermarkElement | None = None) -> WatermarkElement:
         """
         Adds a watermark element to the task.
 
         Args:
-            element (Optional[WatermarkElement]): The element to add.
+            element (WatermarkElement | None): The element to add.
 
         Returns:
             WatermarkElement: The added element.

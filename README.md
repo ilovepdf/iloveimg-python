@@ -10,7 +10,7 @@ Develop and automate image processing tasks like Compress, Convert, Crop, Resize
 
 ## Requirements
 
-- Python 3.9 to 3.12
+- Python 3.10 to 3.14
 
 ---
 
