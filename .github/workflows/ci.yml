@@ -2,49 +2,36 @@ name: Python CI
 
 on:
   push:
-    branches: [main, develop]
+    branches:
+      - main
+      - develop
   pull_request:
-    branches: [main, develop]
+    branches:
+      - main
   workflow_dispatch:
 
 env:
-  PIP_DISABLE_PIP_VERSION_CHECK: 1
+  PYTHON_MIN_VERSION: "3.10"
+  PYTHON_MAX_VERSION: "3.14"
 
 jobs:
   lint:
     runs-on: ubuntu-latest
-    container:
-      image: catthehacker/ubuntu:act-latest
-    timeout-minutes: 10
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.12"]
-      fail-fast: false
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
-      - name: Setup Python with pip cache (GitHub only)
-        if: ${{ contains(env.GITHUB_SERVER_URL, 'github.com') }}
+      - name: Set up Python ${{ env.PYTHON_MIN_VERSION }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: "pip"
-          cache-dependency-path: requirements_dev.txt
-
-      - name: Setup Python (no cache for Gitea/others)
-        if: ${{ !contains(env.GITHUB_SERVER_URL, 'github.com') }}
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache-dependency-path: requirements_dev.txt
+          python-version: ${{ env.PYTHON_MIN_VERSION }}
 
       - name: Upgrade pip
         run: python -m pip install --upgrade pip
 
-      - name: Install dependencies
+      - name: Install dev dependencies
         run: pip install -r requirements_dev.txt
 
-      - name: Install package
+      - name: Install package (editable)
         run: pip install -e .
 
       - name: Lint with flake8
@@ -61,61 +48,26 @@ jobs:
 
   unit_test:
     runs-on: ubuntu-latest
-    container:
-      image: catthehacker/ubuntu:act-latest
-    timeout-minutes: 15
     strategy:
       matrix:
-        python-version: ["3.9", "3.12"]
-      fail-fast: false
+        python-version: ["3.10", "3.14"]
+    needs: lint
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
-      - name: Setup Python with pip cache (GitHub only)
-        if: ${{ contains(env.GITHUB_SERVER_URL, 'github.com') }}
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "pip"
-          cache-dependency-path: requirements_test.txt
-
-      - name: Setup Python (no cache for Gitea/others)
-        if: ${{ !contains(env.GITHUB_SERVER_URL, 'github.com') }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache-dependency-path: requirements_test.txt
 
       - name: Upgrade pip
         run: python -m pip install --upgrade pip
 
-      - name: Install dependencies
+      - name: Install test dependencies
         run: pip install -r requirements_test.txt
 
       - name: Install package
         run: pip install .
-
-      - name: Validate VCS install of current ref (server/repo/branch)
-        run: |
-          if [ -n "${GITHUB_SERVER_URL}" ] && [ -n "${GITHUB_REPOSITORY}" ]; then
-            echo "Installing from VCS: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git@${{ github.ref_name }}"
-            pip install -U "git+${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git@${{ github.sha }}#egg=iloveimg"
-            python .github/workflows/test.py
-          else
-            echo "Skipping VCS install validation: missing server or repository env."
-          fi
-
-      - name: Verify import origin
-        env:
-          PYTHONPATH: ""
-          PYTHONNOUSERSITE: "1"
-        run: |
-          python -I - <<'PY'
-          import iloveimg
-          p = iloveimg.__file__
-          print(p)
-          assert ('site-packages' in p) or ('dist-packages' in p), 'Package not imported from installation.'
-          PY
 
       - name: Run unit tests with coverage
         run: |
@@ -128,91 +80,65 @@ jobs:
             -v \
             --tb=short
 
-      - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.12'
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: false
-          verbose: true
-        continue-on-error: true
-
-  integration_test:
+  installation_validation:
     runs-on: ubuntu-latest
-    container:
-      image: catthehacker/ubuntu:act-latest
-    timeout-minutes: 20
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'))
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.12"]
-      fail-fast: false
-    needs: [lint, unit_test]
+    needs: unit_test
+    if: github.event_name == 'push'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
-      - name: Setup Python with pip cache (GitHub only)
-        if: ${{ contains(env.GITHUB_SERVER_URL, 'github.com') }}
+      - name: Set up Python ${{ env.PYTHON_MIN_VERSION }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: "pip"
-          cache-dependency-path: requirements_test.txt
-
-      - name: Setup Python (no cache for Gitea/others)
-        if: ${{ !contains(env.GITHUB_SERVER_URL, 'github.com') }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache-dependency-path: requirements_test.txt
+          python-version: ${{ env.PYTHON_MIN_VERSION }}
 
       - name: Upgrade pip
         run: python -m pip install --upgrade pip
 
-      - name: Install dependencies
+      - name: Install test dependencies
+        run: pip install -r requirements_test.txt
+
+      - name: Validate global installation
+        run: bash .github/workflows/scripts/install_and_verify.sh global
+
+      - name: Validate user installation
+        run: bash .github/workflows/scripts/install_and_verify.sh user
+
+      - name: Validate VCS installation from current ref
+        run: |
+          pip install -U "git+https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git@${{ github.sha }}#egg=iloveimg"
+          bash .github/workflows/scripts/install_and_verify.sh user
+
+  integration_test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.14"]
+    needs: installation_validation
+    if: github.event_name == 'push'
+    env:
+      ILOVEPDF_PUBLIC_KEY: ${{ secrets.ILOVEPDF_PUBLIC_KEY }}
+      ILOVEPDF_SECRET_KEY: ${{ secrets.ILOVEPDF_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install test dependencies
         run: pip install -r requirements_test.txt
 
       - name: Install package
         run: pip install .
 
-      - name: Validate VCS install of current ref (server/repo/branch)
-        run: |
-          if [ -n "${GITHUB_SERVER_URL}" ] && [ -n "${GITHUB_REPOSITORY}" ]; then
-            echo "Installing from VCS: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git@${{ github.ref_name }}"
-            pip install -U "git+${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git@${{ github.sha }}#egg=iloveimg"
-          else
-            echo "Skipping VCS install validation: missing server or repository env."
-          fi
-
-      - name: Verify required secrets
-        run: |
-          if [ -z "${{ secrets.ILOVEIMG_PUBLIC_KEY }}" ] || \
-             [ -z "${{ secrets.ILOVEIMG_SECRET_KEY }}" ]; then
-            echo "::error::Missing required secrets: ILOVEIMG_PUBLIC_KEY or ILOVEIMG_SECRET_KEY"
-            exit 1
-          fi
-
-      - name: Verify import origin
-        env:
-          PYTHONPATH: ""
-          PYTHONNOUSERSITE: "1"
-        run: |
-          python -I - <<'PY'
-          import iloveimg
-          p = iloveimg.__file__
-          print(p)
-          assert ('site-packages' in p) or ('dist-packages' in p), 'Package not imported from installation.'
-          PY
-
       - name: Run integration tests
-        env:
-          ILOVEIMG_PUBLIC_KEY: ${{ secrets.ILOVEIMG_PUBLIC_KEY }}
-          ILOVEIMG_SECRET_KEY: ${{ secrets.ILOVEIMG_SECRET_KEY }}
         run: |
           pytest tests/integration \
+            --timeout=60 \
             -v \
-            --tb=short \
-            --maxfail=3 \
-            --timeout=60
+            --tb=short
