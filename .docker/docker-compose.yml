@@ -2,21 +2,11 @@ x-python-base: &python_base
   tty: true
   env_file:
     - ../.env
-  volumes:
-    - ../:/src # Mount entire project for live code changes
-  working_dir: /src
+  # volumes:
+  #   - ../:/src # Mount entire project for live code changes
+  # working_dir: /src
 
 services:
-  python39:
-    <<: *python_base
-    image: iloveimg-python39
-    build:
-      context: ../
-      dockerfile: .docker/Dockerfile
-      args:
-        PYTHON_VERSION: "3.9"
-    container_name: iloveimg-python39
-
   python310:
     <<: *python_base
     image: iloveimg-python310
@@ -46,3 +36,23 @@ services:
       args:
         PYTHON_VERSION: "3.12"
     container_name: iloveimg-python312
+
+  python313:
+    <<: *python_base
+    image: iloveimg-python313
+    build:
+      context: ../
+      dockerfile: .docker/Dockerfile
+      args:
+        PYTHON_VERSION: "3.13"
+    container_name: iloveimg-python313
+
+  python314:
+    <<: *python_base
+    image: iloveimg-python314
+    build:
+      context: ../
+      dockerfile: .docker/Dockerfile
+      args:
+        PYTHON_VERSION: "3.14"
+    container_name: iloveimg-python314

@@ -4,7 +4,7 @@ Provides the ChoiceValidator class for validating values against a set
 of allowed choices.
 """
 
-from typing import Any, Iterable, Type
+from typing import Any, Iterable
 
 from iloveimg.exceptions import InvalidChoiceError
 
@@ -24,7 +24,7 @@ class ChoiceValidator:
         value: Any,
         allowed: Iterable[Any],
         param_name: str = "parameter",
-        cls_error: Type[Exception] = InvalidChoiceError,
+        cls_error: type[Exception] = InvalidChoiceError,
     ) -> None:
         """Validates if a value is among the allowed choices.
 
@@ -33,7 +33,7 @@ class ChoiceValidator:
             allowed (Iterable[Any]): The set of allowed values.
             param_name (str, optional): The name of the parameter. Default is
                 "parameter".
-            cls_error (Type[Exception], optional): The exception class to
+            cls_error (type[Exception], optional): The exception class to
                 raise if validation fails. Default is InvalidChoiceError.
 
         Raises:

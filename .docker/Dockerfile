@@ -1,4 +1,4 @@
-ARG PYTHON_VERSION=3.9
+ARG PYTHON_VERSION=3.10
 FROM python:${PYTHON_VERSION}-slim
 
 # Create non-root user for security
@@ -6,6 +6,10 @@ RUN adduser --disabled-password --gecos '' appuser
 
 # Set working directory
 WORKDIR /src
+
+# Set Python environment variables early to prevent .pyc creation during build
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 
 # Copy project configuration files first (rarely change)
 COPY pyproject.toml setup.cfg ./
@@ -27,8 +31,7 @@ RUN pip install .
 RUN chown -R appuser:appuser /src
 USER appuser
 
-# Set Python environment variables
-ENV PYTHONUNBUFFERED=1
+# Update PATH for user-installed packages
 ENV PATH="/home/appuser/.local/bin:$PATH"
 
 # Install package in user site to validate non-root installs

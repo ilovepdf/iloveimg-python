@@ -2,7 +2,7 @@
 
 import os
 import re
-from typing import Any, Callable, Dict, Generic, List, Optional, Type, TypeVar, cast
+from typing import Any, Callable, Dict, Generic, List, TypeVar, cast
 from urllib.parse import unquote
 
 from .abstract_task_element import AbstractTaskElement
@@ -28,24 +28,24 @@ class FileManager:
     processing of upload responses from the API.
     """
 
-    def __init__(self, cls_file: Type[File] = File):
+    def __init__(self, cls_file: type[File] = File):
         """Initialize FileManager.
 
         Args:
-            cls_file (Type[File]): The File class to use for file objects.
+            cls_file (type[File]): The File class to use for file objects.
         """
         self.cls_file = cls_file
 
     def validate_extension(
         self,
         file_path: str,
-        extension_list: Optional[List[str]] = None,
+        extension_list: List[str] | None = None,
     ) -> None:
         """Validate that the file extension is allowed.
 
         Args:
             file_path (str): Path to the file.
-            extension_list (Optional[List[str]]): List of allowed extensions.
+            extension_list (List[str] | None): List of allowed extensions.
 
         Raises:
             ValueError: If the file extension is not allowed.
@@ -55,9 +55,7 @@ class FileManager:
 
         extension_list_format = self.get_extension_format(extension_list)
         if not any(file_path.lower().endswith(ext) for ext in extension_list_format):
-            msg = (
-                f"Only image files are supported " f"{' '.join(extension_list_format)}"
-            )
+            msg = f"Only image files are supported {' '.join(extension_list_format)}"
             raise ValueError(msg)
 
     def validate_file_exists(self, file_path: str) -> None:
@@ -75,8 +73,7 @@ class FileManager:
         file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
         if file_size_mb > MAX_SIZE_MB:
             raise ValueError(
-                f"File {file_path} exceeds the maximum allowed size "
-                f"({MAX_SIZE_MB} MB)"
+                f"File {file_path} exceeds the maximum allowed size ({MAX_SIZE_MB} MB)"
             )
 
     @staticmethod
@@ -90,12 +87,12 @@ class FileManager:
 
     @staticmethod
     def get_extension_format(
-        extension_list: Optional[List[str]] = None,
+        extension_list: List[str] | None = None,
     ) -> tuple:
         """Get extensions in dot format (e.g., '.jpg').
 
         Args:
-            extension_list (Optional[List[str]]): List of extensions to
+            extension_list (List[str] | None): List of extensions to
                 format.
 
         Returns:
@@ -137,16 +134,16 @@ class DownloadManager:
 
     def __init__(self):
         """Initialize DownloadManager."""
-        self.output_file: Optional[bytes] = None
-        self.output_filename: Optional[str] = None
-        self.output_file_name: Optional[str] = None
-        self.output_file_type: Optional[str] = None
+        self.output_file: bytes | None = None
+        self.output_filename: str | None = None
+        self.output_file_name: str | None = None
+        self.output_file_type: str | None = None
 
-    def validate_download_path(self, path: Optional[str]) -> None:
+    def validate_download_path(self, path: str | None) -> None:
         """Validate the download destination path.
 
         Args:
-            path (Optional[str]): The destination path.
+            path (str | None): The destination path.
 
         Raises:
             PathException: If the path is invalid.
@@ -161,16 +158,15 @@ class DownloadManager:
                     "to set the output file name."
                 )
             raise PathException(
-                "Invalid download path. Set a valid folder path "
-                "to download the file."
+                "Invalid download path. Set a valid folder path to download the file."
             )
 
-    def save_file(self, path: Optional[str], filename: Optional[str]) -> None:
+    def save_file(self, path: str | None, filename: str | None) -> None:
         """Save downloaded file to disk.
 
         Args:
-            path (Optional[str]): Destination folder path.
-            filename (Optional[str]): Filename to use.
+            path (str | None): Destination folder path.
+            filename (str | None): Filename to use.
 
         Raises:
             ValueError: If output file data is None.
@@ -250,11 +246,11 @@ class PayloadBuilder:
         return body
 
     @staticmethod
-    def validate_body(body: Optional[Dict[str, Any]]) -> bool:
+    def validate_body(body: Dict[str, Any] | None) -> bool:
         """Validate the request body.
 
         Args:
-            body (Optional[Dict[str, Any]]): The request body dictionary.
+            body (Dict[str, Any] | None): The request body dictionary.
 
         Returns:
             bool: True if valid.
@@ -276,12 +272,12 @@ class TaskStateManager:
 
     def __init__(self):
         """Initialize TaskStateManager."""
-        self.task: Optional[str] = None
-        self.status: Optional[str] = None
-        self.status_message: Optional[str] = None
-        self.remaining_credits: Optional[int] = None
-        self.remaining_files: Optional[int] = None
-        self.remaining_pages: Optional[int] = None
+        self.task: str | None = None
+        self.status: str | None = None
+        self.status_message: str | None = None
+        self.remaining_credits: int | None = None
+        self.remaining_files: int | None = None
+        self.remaining_pages: int | None = None
 
     def validate_task_started(self) -> None:
         """Validate that the task has been started.
@@ -300,35 +296,35 @@ class TaskStateManager:
         """
         self.task = task
 
-    def get_task_id(self) -> Optional[str]:
+    def get_task_id(self) -> str | None:
         """Get the task ID.
 
         Returns:
-            Optional[str]: The task ID.
+            str | None: The task ID.
         """
         return self.task
 
-    def set_remaining_credits(self, remaining_credits: Optional[int]) -> None:
+    def set_remaining_credits(self, remaining_credits: int | None) -> None:
         """Set the remaining credits.
 
         Args:
-            remaining_credits (Optional[int]): Number of remaining credits.
+            remaining_credits (int | None): Number of remaining credits.
         """
         self.remaining_credits = remaining_credits
 
-    def set_remaining_files(self, remaining_files: Optional[int]) -> None:
+    def set_remaining_files(self, remaining_files: int | None) -> None:
         """Set the remaining files.
 
         Args:
-            remaining_files (Optional[int]): Number of remaining files.
+            remaining_files (int | None): Number of remaining files.
         """
         self.remaining_files = remaining_files
 
-    def set_remaining_pages(self, remaining_pages: Optional[int]) -> None:
+    def set_remaining_pages(self, remaining_pages: int | None) -> None:
         """Set the remaining pages.
 
         Args:
-            remaining_pages (Optional[int]): Number of remaining pages.
+            remaining_pages (int | None): Number of remaining pages.
         """
         self.remaining_pages = remaining_pages
 
@@ -381,7 +377,7 @@ class Task(
         any_tool = AnyTask(public_key, secret_key)
     """
 
-    cls_file: Type[T_FILE] = File  # type: ignore
+    cls_file: type[T_FILE] = File  # type: ignore
     _endpoint_execute = "process"
     _tool: str
 
@@ -393,21 +389,21 @@ class Task(
 
     def __init__(
         self,
-        public_key: Optional[str] = None,
-        secret_key: Optional[str] = None,
+        public_key: str | None = None,
+        secret_key: str | None = None,
         make_start: bool = False,
     ) -> None:
         """
         Initialize a Task instance.
 
         Args:
-            public_key (Optional[str]): API public key.
-            secret_key (Optional[str]): API secret key.
+            public_key (str | None): API public key.
+            secret_key (str | None): API secret key.
             make_start (bool): Whether to start the task immediately.
         """
         super().__init__(public_key, secret_key)
         self.files: List[T_FILE] = []
-        self.result: Optional[Dict[str, Any]] = None
+        self.result: Dict[str, Any] | None = None
 
         # Initialize component managers
         self._file_manager = FileManager(self.cls_file)
@@ -421,20 +417,20 @@ class Task(
             self.start()
 
     @property
-    def tool(self) -> Optional[str]:
+    def tool(self) -> str | None:
         """Get the tool name.
 
         Returns:
-            Optional[str]: The current tool name. Default is None.
+            str | None: The current tool name. Default is None.
         """
         return self._payload["tool"]
 
     @tool.setter
-    def tool(self, value: Optional[str]) -> None:
+    def tool(self, value: str | None) -> None:
         """Set the tool name.
 
         Args:
-            value (Optional[str]): The tool name.
+            value (str | None): The tool name.
         """
         self._payload["tool"] = value
 
@@ -481,11 +477,11 @@ class Task(
         self._state_manager.set_task(task)
         self._payload["task"] = task
 
-    def get_task_id(self) -> Optional[str]:
+    def get_task_id(self) -> str | None:
         """Get the current task ID.
 
         Returns:
-            Optional[str]: The task ID, or None if not set.
+            str | None: The task ID, or None if not set.
         """
         return self._state_manager.get_task_id()
 
@@ -523,16 +519,16 @@ class Task(
 
     def upload_file(
         self,
-        task: Optional[str],
+        task: str | None,
         file_path: str,
-        extra_params: Optional[Dict[str, Any]] = None,
+        extra_params: Dict[str, Any] | None = None,
     ) -> T_FILE:
         """Upload a file to the API for the current task.
 
         Args:
-            task (Optional[str]): The task ID.
+            task (str | None): The task ID.
             file_path (str): Path to the file to upload.
-            extra_params (Optional[Dict[str, Any]]): Additional parameters
+            extra_params (Dict[str, Any] | None): Additional parameters
                 for upload.
 
         Returns:
@@ -557,15 +553,15 @@ class Task(
 
     def get_status(
         self,
-        server: Optional[str] = None,
-        task_id: Optional[str] = None,
+        server: str | None = None,
+        task_id: str | None = None,
     ) -> Dict[str, Any]:
         """Get the status of the current task from the API.
 
         Args:
-            server (Optional[str]): The server URL. If not provided,
+            server (str | None): The server URL. If not provided,
                 uses the current worker server.
-            task_id (Optional[str]): The task ID. If not provided,
+            task_id (str | None): The task ID. If not provided,
                 uses the current task ID.
 
         Returns:
@@ -596,11 +592,11 @@ class Task(
         self.result = response.json()
         return self
 
-    def download(self, path: Optional[str] = None) -> None:
+    def download(self, path: str | None = None) -> None:
         """Download the processed file from the API.
 
         Args:
-            path (Optional[str]): Destination folder path.
+            path (str | None): Destination folder path.
 
         Raises:
             PathException: If the path is invalid.
@@ -621,11 +617,11 @@ class Task(
         )
         self._download_manager.save_file(dest_path, filename)
 
-    def _download_request_data(self, task: Optional[str]) -> Any:
+    def _download_request_data(self, task: str | None) -> Any:
         """Build and send the download request for the given task.
 
         Args:
-            task (Optional[str]): The task ID.
+            task (str | None): The task ID.
 
         Returns:
             Any: The API response object.
@@ -677,112 +673,112 @@ class Task(
         return super()._to_payload()
 
     @property
-    def output_file(self) -> Optional[bytes]:
+    def output_file(self) -> bytes | None:
         """Get the downloaded file content.
 
         Returns:
-            Optional[bytes]: The file content, or None if not downloaded.
+            bytes | None: The file content, or None if not downloaded.
         """
         return self._download_manager.output_file
 
     @property
-    def output_filename(self) -> Optional[str]:
+    def output_filename(self) -> str | None:
         """Get the output filename set by user.
 
         Returns:
-            Optional[str]: The output filename.
+            str | None: The output filename.
         """
         return self._download_manager.output_filename
 
     @property
-    def output_file_name(self) -> Optional[str]:
+    def output_file_name(self) -> str | None:
         """Get the output file name from response.
 
         Returns:
-            Optional[str]: The file name extracted from response.
+            str | None: The file name extracted from response.
         """
         return self._download_manager.output_file_name
 
     @property
-    def output_file_type(self) -> Optional[str]:
+    def output_file_type(self) -> str | None:
         """Get the output file type.
 
         Returns:
-            Optional[str]: The file extension.
+            str | None: The file extension.
         """
         return self._download_manager.output_file_type
 
     @property
-    def task(self) -> Optional[str]:
+    def task(self) -> str | None:
         """Get the task ID.
 
         Returns:
-            Optional[str]: The task ID. Default is None.
+            str | None: The task ID. Default is None.
         """
         return self._state_manager.task
 
     @task.setter
-    def task(self, value: Optional[str]) -> None:
+    def task(self, value: str | None) -> None:
         """Set the task ID.
 
         Args:
-            value (Optional[str]): The task ID.
+            value (str | None): The task ID.
         """
         self._state_manager.task = value
 
     @property
-    def status(self) -> Optional[str]:
+    def status(self) -> str | None:
         """Get the task status.
 
         Returns:
-            Optional[str]: The task status. Default is None.
+            str | None: The task status. Default is None.
         """
         return self._state_manager.status
 
     @property
-    def status_message(self) -> Optional[str]:
+    def status_message(self) -> str | None:
         """Get the task status message.
 
         Returns:
-            Optional[str]: The status message. Default is None.
+            str | None: The status message. Default is None.
         """
         return self._state_manager.status_message
 
     @property
-    def remaining_files(self) -> Optional[int]:
+    def remaining_files(self) -> int | None:
         """Get remaining files count.
 
         Returns:
-            Optional[int]: Number of remaining files. Default is None.
+            int | None: Number of remaining files. Default is None.
         """
         return self._state_manager.remaining_files
 
     @property
-    def remaining_pages(self) -> Optional[int]:
+    def remaining_pages(self) -> int | None:
         """Get remaining pages count.
 
         Returns:
-            Optional[int]: Number of remaining pages. Default is None.
+            int | None: Number of remaining pages. Default is None.
         """
         return self._state_manager.remaining_pages
 
     @property
-    def remaining_credits(self) -> Optional[int]:
+    def remaining_credits(self) -> int | None:
         """Get remaining credits count.
 
         Returns:
-            Optional[int]: Number of remaining credits. Default is None.
+            int | None: Number of remaining credits. Default is None.
         """
         return self._state_manager.remaining_credits
 
     def _validate_file_extension(
-        self, file_path: str, extension_list: Optional[List[str]] = None
+        self, file_path: str, extension_list: List[str] | None = None
     ) -> None:
         """Validate file extension.
 
         Args:
             file_path (str): Path to the file.
-            extension_list (Optional[List[str]]): List of allowed extensions.
+            extension_list (List[str] | None): List of allowed extensions.
 
         Raises:
             ValueError: If the file extension is not allowed.
@@ -806,12 +802,12 @@ class Task(
         return self._file_manager.get_extension_list()
 
     def get_extension_list_format(
-        self, extension_list: Optional[List[str]] = None
+        self, extension_list: List[str] | None = None
     ) -> tuple:
         """Get extensions in dot format.
 
         Args:
-            extension_list (Optional[List[str]]): List of extensions to format.
+            extension_list (List[str] | None): List of extensions to format.
 
         Returns:
             tuple: Tuple of formatted extensions.

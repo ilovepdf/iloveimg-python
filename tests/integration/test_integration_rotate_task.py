@@ -5,7 +5,6 @@ Covers:
 """
 
 import unittest
-from typing import Type
 
 # from typing_extensions import Type
 from iloveimg.rotate_task import RotateTask
@@ -21,7 +20,7 @@ class TestRotateTaskIntegration(BaseTaskIntegrationTest):
     - Full workflow: add image file, set rotation, execute, and download rotated image.
     """
 
-    task_class: Type[RotateTask] = RotateTask
+    task_class: type[RotateTask] = RotateTask
 
     def test_rotate_single_file_flow(self):
         """

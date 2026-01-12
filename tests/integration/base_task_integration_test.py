@@ -11,7 +11,7 @@ Example:
 import os
 import shutil
 from pathlib import Path
-from typing import Generic, Optional, Type, TypeVar
+from typing import Generic, TypeVar
 
 import pytest
 
@@ -57,10 +57,10 @@ class BaseTaskIntegrationTest(Generic[T]):
         secret_key (str): iLoveIMG secret API key from environment.
         folder_sample_path (str): Base path for sample files.
         sample_file_path (str): Path to the sample image file for testing.
-        task_class (Type[Task]): The Task class to instantiate (must be set by
+        task_class (type[Task]): The Task class to instantiate (must be set by
             subclass).
         task (Optional[Task]): Instance of the Task class.
-        downloaded_file (Optional[str]): Path to the downloaded output file.
+        downloaded_file (str | None): Path to the downloaded output file.
 
     Example:
         class MyTaskTest(BaseIloveImgTaskIntegrationTest):
@@ -74,9 +74,9 @@ class BaseTaskIntegrationTest(Generic[T]):
         "FOLDER_SAMPLE_PATH", os.path.join("tests", "integration", "files_samples")
     )
     sample_file_path: str = "image_sample.jpg"
-    task_class: Type[T]
+    task_class: type[T]
     task: T
-    downloaded_file: Optional[str] = None
+    downloaded_file: str | None = None
 
     @pytest.fixture(scope="class", autouse=True)
     def setup_class(self):
@@ -154,7 +154,7 @@ class BaseTaskIntegrationTest(Generic[T]):
 
     def maybe_copy_output_file(
         self, keep_env_var: str = "ILOVEIMG_KEEP_OUTPUT_DIR"
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Copies the output file to a persistent location if the specified environment
         variable is set.
@@ -164,7 +164,7 @@ class BaseTaskIntegrationTest(Generic[T]):
                 output directory path.
 
         Returns:
-            Optional[str]: Path to the copied file, or None if no copy was made.
+            str | None: Path to the copied file, or None if no copy was made.
 
         Example:
             copied_path = self.maybe_copy_output_file()
@@ -189,13 +189,13 @@ class BaseTaskIntegrationTest(Generic[T]):
         shutil.copy(self.downloaded_file, dest_path)
         return dest_path
 
-    def add_sample_file(self, filename: Optional[str] = None):
+    def add_sample_file(self, filename: str | None = None):
         """
         Adds a sample file to the task.
 
 
         Args:
-            filename (Optional[str]): Optional name of the sample file to add.
+            filename (str | None): Optional name of the sample file to add.
             If not provided, uses the default sample file path.
 
         Returns:

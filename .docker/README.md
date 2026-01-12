@@ -1,165 +1,114 @@
-# Docker & Environment Setup
+# Docker Setup Guide
 
-This directory contains Docker configuration files for developing and testing the **iLoveIMG Python** library in an isolated, reproducible environment.
-
----
-
-## Prerequisites
-
-- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/) installed on your system.
-- Environment variables configured as described below.
-
----
-
-## Environment Variables
-
-Before running Docker containers, you must set up the required environment variables:
-
-1. Copy the sample environment file:
-
-   ```bash
-   cp .env.sample .env
-   ```
-
-2. Edit `.env` and set the following variables:
-
-   - `ILOVEIMG_PUBLIC_KEY` – Your iLoveIMG project public key
-   - `ILOVEIMG_SECRET_KEY` – Your iLoveIMG project secret key
-   - `FOLDER_SAMPLE_PATH` – Path to sample files (default: `tests/integration/files_samples`)
-
-**Note:**
-The `.env` file is used by both local development and Docker containers. Never commit your real credentials.
+Use Docker to test the **iLoveIMG Python** library across multiple Python versions (3.10 to 3.14) in isolated environments.
 
 ---
 
 ## Quick Start
 
-### 1. Build Docker Images
+### 1. Setup Environment Variables
 
-To build all Python version images (3.9–3.12):
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your API credentials from [iLoveIMG Developer Portal](https://developer.iloveimg.com/user/projects):
+
+```bash
+ILOVEIMG_PUBLIC_KEY=your_public_key_here
+ILOVEIMG_SECRET_KEY=your_secret_key_here
+```
+
+**Important:** Never commit `.env` with real credentials.
+
+---
+
+### 2. Build Images
 
 ```bash
 docker-compose -f .docker/docker-compose.yml build
 ```
 
-To build a specific Python version (e.g., Python 3.12):
-
-```bash
-docker-compose -f .docker/docker-compose.yml build python312
-```
-
-To force a rebuild (ignore cache):
-
-```bash
-docker-compose -f .docker/docker-compose.yml build --no-cache
-```
-
-### 2. Run Tests
-
-To run all tests (unit and integration) in a specific Python version:
-
-```bash
-docker-compose -f .docker/docker-compose.yml run python39
-```
-
-For Python 3.10:
-
-```bash
-docker-compose -f .docker/docker-compose.yml run python310
-```
-
-Available services: `python39`, `python310`, `python311`, `python312`
-
-#### Run Only Unit or Integration Tests
-
-```bash
-docker-compose -f .docker/docker-compose.yml run python39 pytest tests/unit
-docker-compose -f .docker/docker-compose.yml run --env-file .docker/.env python39 pytest tests/integration
-```
-
-#### Run a Specific Test File
-
-```bash
-docker-compose -f .docker/docker-compose.yml run python39 pytest tests/unit/test_compress_task.py
-```
-
----
-## Image validation behavior
-
-The Docker images validate the package installation in two modes:
-
-- Global installation (system site-packages): the image installs the package
-  globally and verifies imports in isolated mode to ensure resolution from
-  `site-packages` or `dist-packages`.
-- User-site installation (`pip install --user`): the image also installs the
-  package in the user site and verifies that a regular Python process resolves
-  imports from `~/.local/...`.
-
-This dual validation ensures the library works correctly for both privileged and
-non-privileged environments.
-
 ---
 
-## Development Workflow
-
-- The project directory is mounted into the container as a volume.
-- **Live code editing:** Changes to Python files are immediately reflected in the container.
-- **No rebuilds needed:** Modify code and run tests without rebuilding the image.
-- **Efficient iteration:** Quickly test changes across multiple Python versions.
-
-Example workflow:
+### 3. Run Tests
 
 ```bash
-# Terminal 1: Run tests in Python 3.9
-docker-compose -f .docker/docker-compose.yml run python39
-
-# Terminal 2: Edit code in your IDE
-# Changes are instantly available in the running container
+docker-compose -f .docker/docker-compose.yml run --rm python310
 ```
 
 ---
 
-## Using Direct Docker Commands
+## Common Commands
 
-If you prefer to use Docker directly instead of Docker Compose:
+### Run Specific Test Types
 
 ```bash
-# Build
-docker build -t iloveimg-python39 -f .docker/Dockerfile .
+# Unit tests only
+docker-compose -f .docker/docker-compose.yml run --rm python310 pytest tests/unit
 
-# Run with environment file
-docker run --env-file .docker/.env iloveimg-python39
+# Integration tests only
+docker-compose -f .docker/docker-compose.yml run --rm python310 pytest tests/integration
+
+# Specific test file
+docker-compose -f .docker/docker-compose.yml run --rm python310 pytest tests/unit/test_compress_task.py
+```
+
+### Test Different Python Versions
+
+Available: `python310`, `python311`, `python312`, `python313`, `python314`
+
+```bash
+docker-compose -f .docker/docker-compose.yml run --rm python312 pytest tests/unit
+```
+
+### Rebuild After Code Changes
+
+```bash
+docker-compose -f .docker/docker-compose.yml build python310
+```
+
+### Rebuild from Scratch
+
+```bash
+docker-compose -f .docker/docker-compose.yml build --no-cache python310
+```
+
+### Open Shell Inside Container
+
+```bash
+docker-compose -f .docker/docker-compose.yml run --rm python310 bash
 ```
 
 ---
 
 ## Troubleshooting
 
-### Container exits after running tests
+### TTY Error
 
-This is expected. The container runs tests and exits when complete.
-To keep it running for debugging:
-
-```bash
-docker-compose -f .docker/docker-compose.yml run python39 bash
-```
-
-### Changes not reflected in container
-
-- Ensure files are saved in your editor.
-- Re-run tests (container picks up changes from mounted volume).
-
-### Clear cache and rebuild
+If you see "the input device is not a TTY", add `-T` flag:
 
 ```bash
-docker-compose -f .docker/docker-compose.yml down
-docker-compose -f .docker/docker-compose.yml build --no-cache
+docker-compose -f .docker/docker-compose.yml run --rm -T python310 pytest tests/unit
 ```
+
+### Import Errors After Code Changes
+
+Rebuild the image:
+
+```bash
+docker-compose -f .docker/docker-compose.yml build python310
+```
+
+### Authentication Errors
+
+- Verify `.env` file exists in project root with valid credentials
+- Check you copied it from `.env.example`
+- Integration tests require valid API credentials
 
 ---
 
-## Reference
+## Additional Information
 
-- Main project documentation: [../README.md](../README.md)
-- Environment variable sample: [.env.sample](.env.sample)
-- Official iLoveIMG API docs: [https://developer.iloveimg.com/docs](https://developer.iloveimg.com/docs)
+- Main documentation: [../README.md](../README.md)
+- API docs: [developer.iloveimg.com/docs](https://developer.iloveimg.com/docs)

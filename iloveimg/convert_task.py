@@ -5,7 +5,7 @@ Provides the ConvertTask class to configure and execute image conversion.
 Allows conversion between formats such as JPG, PNG, GIF, GIF_ANIMATION, and HEIC.
 """
 
-from typing import Literal, Optional
+from typing import Literal
 
 from .abstract_task_element import Payload
 from .task import Task
@@ -82,12 +82,12 @@ class ConvertTask(Task):
         self._set_attr("convert_to", value)
 
     @property
-    def gif_time(self) -> Optional[int]:
+    def gif_time(self) -> int | None:
         """
         Gets GIF animation time (hundredths of a second).
 
         Returns:
-            Optional[int]: The current value. Default is 50 if convert_to is
+            int | None: The current value. Default is 50 if convert_to is
                 "gif_animation", otherwise None.
         """
         if self.convert_to != "gif_animation":
@@ -114,12 +114,12 @@ class ConvertTask(Task):
         self._set_attr("gif_time", value)
 
     @property
-    def gif_loop(self) -> Optional[bool]:
+    def gif_loop(self) -> bool | None:
         """
         Gets GIF animation loop option.
 
         Returns:
-            Optional[bool]: The current value. Default is True if convert_to is
+            bool | None: The current value. Default is True if convert_to is
                 "gif_animation", otherwise None.
         """
         if self.convert_to != "gif_animation":
