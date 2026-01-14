@@ -1,5 +1,9 @@
 # iLoveIMG API - Python Library
 
+[![PyPI version](https://img.shields.io/pypi/v/iloveimg.svg)](https://pypi.org/project/iloveimg/)
+[![Python versions](https://img.shields.io/pypi/pyversions/iloveimg.svg)](https://pypi.org/project/iloveimg/)
+[![License](https://img.shields.io/pypi/l/iloveimg.svg)](https://pypi.org/project/iloveimg/)
+
 A Python library for [iLoveIMG API](https://developer.iloveimg.com) to automate image processing tasks such as compressing, resizing, converting, cropping, watermarking, removing backgrounds, and more.
 
 You can sign up for an iLoveIMG account at https://developer.iloveimg.com
