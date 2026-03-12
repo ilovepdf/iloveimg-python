@@ -34,7 +34,7 @@ This folder contains the core Python source code for interacting with the iLoveI
 
 - Keep the code modular and well-documented.
 - Ensure all new modules and classes include appropriate docstrings (Google style, in English).
-- Any file ending with `*_task.py` must have corresponding unit and integration tests, as well as a sample script (see project root `AGENT.md` for details).
+- Any file ending with `*_task.py` must have corresponding unit and integration tests, as well as a sample script.
 - Use type hints for all public methods and properties.
 - Follow PEP 8 and project-specific naming conventions.
 - Use the provided validators for input validation in tasks and models.
