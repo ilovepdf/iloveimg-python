@@ -10,7 +10,7 @@ Each test executes the full workflow: append sample file(s), configure parameter
 execute the API task, wait for completion, and download the result.
 
 The remote API credentials and sample file path are provided via environment
-variables documented in .docker/.env.sample.
+variables documented in .env.example.
 """
 
 from iloveimg import ResizeTask

@@ -37,6 +37,7 @@ Unit tests are designed to verify the correctness of individual functions, class
 
 - `test_choice_validator.py` - Choice validation for restricted value sets
 - `test_int_validator.py` - Integer validation with range and option constraints
+- `test_string_validator.py` - StringValidator type enforcement and non-empty checks
 
 ### Exception Handling
 
@@ -92,7 +93,6 @@ pytest tests/unit -k "compress" -v
 - All new modules and public methods in `iloveimg/` should have corresponding unit tests here.
 - Each test file should start with a module-level docstring describing its purpose.
 - Use `AbstractUnitTaskTest` as the base class for task-related unit tests.
-- Include the line `# pylint: disable=protected-access` at the top of test files that access protected members.
 - When adding new tests, update this README to reflect the changes.
 
 ---

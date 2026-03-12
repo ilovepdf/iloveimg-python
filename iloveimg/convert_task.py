@@ -7,9 +7,12 @@ Allows conversion between formats such as JPG, PNG, GIF, GIF_ANIMATION, and HEIC
 
 from typing import Literal
 
+from iloveimg.exceptions import TaskConfigurationError
+
 from .abstract_task_element import Payload
 from .task import Task
-from .validators import ChoiceValidator
+from .validators import ChoiceValidator, IntValidator
+from .validators.bool_validator import BoolValidator
 
 OutputFormatType = Literal["jpg", "png", "gif", "gif_animation"]
 OUTPUT_FORMAT_OPTIONS = {"jpg", "png", "gif", "gif_animation"}
@@ -106,11 +109,10 @@ class ConvertTask(Task):
             ValueError: If not positive integer or convert_to is not 'gif_animation'.
         """
         if self.convert_to != "gif_animation":
-            raise ValueError(
+            raise TaskConfigurationError(
                 "gif_time can only be set if 'convert_to' is 'gif_animation'."
             )
-        if not isinstance(value, int) or value <= 0:
-            raise ValueError("gif_time must be a positive integer.")
+        IntValidator.validate_positive(value)
         self._set_attr("gif_time", value)
 
     @property
@@ -138,11 +140,10 @@ class ConvertTask(Task):
             ValueError: If not boolean or convert_to is not 'gif_animation'.
         """
         if self.convert_to != "gif_animation":
-            raise ValueError(
+            raise TaskConfigurationError(
                 "gif_loop can only be set if 'convert_to' is 'gif_animation'."
             )
-        if not isinstance(value, bool):
-            raise ValueError("gif_loop must be a boolean (True or False).")
+        BoolValidator.validate(value)
         self._set_attr("gif_loop", value)
 
     def _to_payload(self) -> Payload:

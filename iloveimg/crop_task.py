@@ -89,7 +89,7 @@ class CropTask(Task):
         self._set_attr("height", value)
 
     @property
-    def x(self) -> int:  # pylint: disable=invalid-name
+    def x(self) -> int:
         """
         Returns the horizontal starting point in pixels for cropping.
 
@@ -99,7 +99,7 @@ class CropTask(Task):
         return self._get_attr("x")
 
     @x.setter
-    def x(self, value: int):  # pylint: disable=invalid-name
+    def x(self, value: int):
         """
         Sets the horizontal starting point in pixels for cropping.
 
@@ -114,7 +114,7 @@ class CropTask(Task):
         self._set_attr("x", value)
 
     @property
-    def y(self) -> int:  # pylint: disable=invalid-name
+    def y(self) -> int:
         """
         Returns the vertical starting point in pixels for cropping.
 
@@ -124,7 +124,7 @@ class CropTask(Task):
         return self._get_attr("y")
 
     @y.setter
-    def y(self, value: int):  # pylint: disable=invalid-name
+    def y(self, value: int):
         """
         Sets the vertical starting point in pixels for cropping.
 

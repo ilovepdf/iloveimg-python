@@ -6,8 +6,6 @@ from pytest_mock import MockerFixture
 from iloveimg.exceptions.auth_exception import AuthException
 from iloveimg.iloveimg_api import Iloveimg
 
-# pylint: disable=missing-function-docstring
-
 
 class IloveimgAuthManager:
     """

@@ -1,4 +1,8 @@
-"""Unit tests for the CropTask class."""
+"""Unit tests for the CropTask class in the iloveimg module.
+
+These tests verify the correct behavior and parameter validation for image cropping
+tasks using CropTask.
+"""
 
 from unittest.mock import MagicMock
 
@@ -10,9 +14,13 @@ from iloveimg.exceptions import IntOutOfRangeError, NotAnIntError
 from .base_test import AbstractUnitTaskTest
 
 
-# pylint: disable=protected-access
 class TestCropTask(AbstractUnitTaskTest):
-    """Test the CropTask class."""
+    """
+    Unit tests for CropTask.
+
+    Covers initialization, valid and invalid dimension settings,
+    payload validation, and single-file constraint enforcement.
+    """
 
     _task_class = CropTask
     _task_tool = "cropimage"
@@ -135,6 +143,7 @@ class TestCropTask(AbstractUnitTaskTest):
             "x": 100,
             "y": 200,
             "files": [],
+            "task": None,
         }
 
     def test_validate_payload_requires_width(self, my_task):

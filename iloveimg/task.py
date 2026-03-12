@@ -2,11 +2,18 @@
 
 import os
 import re
-from typing import Any, Callable, Dict, Generic, List, TypeVar, cast
+from collections.abc import Callable
+from typing import Any, Generic, TypeVar, cast
 from urllib.parse import unquote
 
 from .abstract_task_element import AbstractTaskElement
-from .exceptions import PathException, StartException, UploadException
+from .exceptions import (
+    FileExtensionNotAllowed,
+    FileTooLargeError,
+    PathException,
+    StartException,
+    UploadException,
+)
 from .file import File
 from .iloveimg_api import Iloveimg
 
@@ -15,7 +22,7 @@ IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "tif", "webp"]
 MAX_SIZE_MB = 100  # File size limit (100 MB)
 
 
-T_FILE = TypeVar("T_FILE", bound=File)  # pylint: disable=invalid-name
+T_FILE = TypeVar("T_FILE", bound=File)
 
 
 T = TypeVar("T")
@@ -28,35 +35,39 @@ class FileManager:
     processing of upload responses from the API.
     """
 
-    def __init__(self, cls_file: type[File] = File):
+    def __init__(
+        self, cls_file: type[File] = File, file_extensions: list[str] | None = None
+    ):
         """Initialize FileManager.
 
         Args:
             cls_file (type[File]): The File class to use for file objects.
         """
         self.cls_file = cls_file
+        self.file_extensions = file_extensions or IMAGE_EXTENSIONS
 
     def validate_extension(
         self,
         file_path: str,
-        extension_list: List[str] | None = None,
+        extension_list: list[str] | None = None,
     ) -> None:
         """Validate that the file extension is allowed.
 
         Args:
             file_path (str): Path to the file.
-            extension_list (List[str] | None): List of allowed extensions.
+            extension_list (list[str] | None): List of allowed extensions.
 
         Raises:
-            ValueError: If the file extension is not allowed.
+            FileExtensionNotAllowed: If the file extension is not allowed.
         """
         if extension_list is None:
-            extension_list = IMAGE_EXTENSIONS
+            extension_list = self.file_extensions
 
         extension_list_format = self.get_extension_format(extension_list)
         if not any(file_path.lower().endswith(ext) for ext in extension_list_format):
-            msg = f"Only image files are supported {' '.join(extension_list_format)}"
-            raise ValueError(msg)
+            msg = "File extension not allowed. Supported extensions: "
+            msg += " ".join(extension_list_format)
+            raise FileExtensionNotAllowed(msg)
 
     def validate_file_exists(self, file_path: str) -> None:
         """Validate that a file exists and is within size limits.
@@ -68,37 +79,35 @@ class FileManager:
             ValueError: If file does not exist or exceeds size limit.
         """
         if not os.path.exists(file_path):
-            raise ValueError(f"File {file_path} does not exist")
+            raise FileNotFoundError(f"File {file_path} does not exist")
 
         file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
         if file_size_mb > MAX_SIZE_MB:
-            raise ValueError(
+            raise FileTooLargeError(
                 f"File {file_path} exceeds the maximum allowed size ({MAX_SIZE_MB} MB)"
             )
 
-    @staticmethod
-    def get_extension_list() -> List[str]:
-        """Get the list of allowed image file extensions.
+    def get_extension_list(self) -> list[str]:
+        """Get the list of allowed file extensions.
 
         Returns:
             List[str]: List of allowed extensions.
         """
-        return IMAGE_EXTENSIONS
+        return self.file_extensions
 
-    @staticmethod
     def get_extension_format(
-        extension_list: List[str] | None = None,
+        self,
+        extension_list: list[str] | None = None,
     ) -> tuple:
-        """Get extensions in dot format (e.g., '.jpg').
+        """Get extensions in dot format (e.g., '.png, .jpg').
 
         Args:
-            extension_list (List[str] | None): List of extensions to
-                format.
+            extension_list (list[str] | None): List of extensions to format.
 
         Returns:
             tuple: Tuple of formatted extensions.
         """
-        ext_list = extension_list or IMAGE_EXTENSIONS
+        ext_list = extension_list or self.file_extensions
         return tuple(f".{ext}" for ext in ext_list)
 
     def process_upload_response(self, response: Any, file_path: str) -> File:
@@ -214,23 +223,23 @@ class PayloadBuilder:
     for API requests.
     """
 
-    def __init__(self, to_payload_func: Callable[[], Dict[str, Any]]) -> None:
+    def __init__(self, to_payload_func: Callable[[], dict[str, Any]]) -> None:
         """Initialize PayloadBuilder.
 
         Args:
-            to_payload_func (Callable[[], Dict[str, Any]]): Function that returns the
+            to_payload_func (Callable[[], dict[str, Any]]): Function that returns the
                 payload dictionary.
         """
         self._to_payload = to_payload_func
 
-    def build_body(self, version: str) -> Dict[str, Any]:
+    def build_body(self, version: str) -> dict[str, Any]:
         """Build the request body for API operations.
 
         Args:
             version (str): The library version.
 
         Returns:
-            Dict[str, Any]: The request body dictionary.
+             [str, Any]: The request body dictionary.
 
         Raises:
             ValueError: If body is invalid.
@@ -246,11 +255,11 @@ class PayloadBuilder:
         return body
 
     @staticmethod
-    def validate_body(body: Dict[str, Any] | None) -> bool:
+    def validate_body(body: dict[str, Any] | None) -> bool:
         """Validate the request body.
 
         Args:
-            body (Dict[str, Any] | None): The request body dictionary.
+            body (dict[str, Any] | None): The request body dictionary.
 
         Returns:
             bool: True if valid.
@@ -328,25 +337,24 @@ class TaskStateManager:
         """
         self.remaining_pages = remaining_pages
 
-    def update_status(self, result: Dict[str, Any]) -> None:
+    def update_status(self, result: dict[str, Any]) -> None:
         """Update task status from result.
 
         Args:
-            result (Dict[str, Any]): The result dictionary from API.
+            result (dict[str, Any]): The result dictionary from API.
         """
         self.status = result.get("status")
         self.status_message = result.get("status_message")
 
 
-class Task(
-    Iloveimg, Generic[T_FILE], AbstractTaskElement
-):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
+class Task(Iloveimg, Generic[T_FILE], AbstractTaskElement):
     """
     Class for handling file tasks using the iLoveIMG API.
 
     This class provides core functionality for managing file-based tasks such
-    as uploading, downloading, and processing images. It supports validation,
+    as uploading, downloading, and processing files. It supports validation,
     error handling, and integration with the iLoveIMG API.
+
 
     Args:
         public_key (str, optional): API public key. If not provided,
@@ -378,8 +386,10 @@ class Task(
     """
 
     cls_file: type[T_FILE] = File  # type: ignore
+    _file_extension: list = IMAGE_EXTENSIONS
     _endpoint_execute = "process"
     _tool: str
+    _task_status = "TaskSuccess"
 
     _DEFAULT_PAYLOAD = {
         "tool": None,
@@ -391,7 +401,7 @@ class Task(
         self,
         public_key: str | None = None,
         secret_key: str | None = None,
-        make_start: bool = False,
+        make_start: bool = True,
     ) -> None:
         """
         Initialize a Task instance.
@@ -402,11 +412,8 @@ class Task(
             make_start (bool): Whether to start the task immediately.
         """
         super().__init__(public_key, secret_key)
-        self.files: List[T_FILE] = []
-        self.result: Dict[str, Any] | None = None
-
-        # Initialize component managers
-        self._file_manager = FileManager(self.cls_file)
+        self.result: dict[str, Any] | None = None
+        self._file_manager = FileManager(self.cls_file, self._file_extension)
         self._download_manager = DownloadManager()
         self._payload_builder = PayloadBuilder(self._to_payload)
         self._state_manager = TaskStateManager()
@@ -433,6 +440,11 @@ class Task(
             value (str | None): The tool name.
         """
         self._payload["tool"] = value
+
+    @property
+    def files(self):
+        """Get the files of the task."""
+        return self._get_attr("files")
 
     def start(self) -> None:
         """
@@ -497,6 +509,35 @@ class Task(
         self.files.append(file)
         return file
 
+    def _validate_and_upload_file(
+        self, file_path: str, extension_list: list[str] | None = None, **kwargs: Any
+    ) -> T_FILE:
+        """Validate and upload a file with optional extension filtering.
+
+        This helper method encapsulates the common pattern of validating
+        file extension, checking task state, uploading the file, and ensuring
+        the correct File instance type.
+
+        Args:
+            file_path (str): Path to the file to upload.
+            extension_list (Optional[List[str]]): List of allowed file extensions.
+                If None, uses the task's default allowed extensions.
+            **kwargs (Any): Additional parameters for file upload.
+
+        Returns:
+            T_FILE: The uploaded File object.
+
+        Raises:
+            ValueError: If the file extension is not valid.
+            ProcessingError: If the task has not been started yet.
+        """
+        self._file_manager.validate_extension(file_path, extension_list=extension_list)
+        self._state_manager.validate_task_started()
+        file = self.upload_file(self.get_task_id(), file_path, kwargs)
+        if not isinstance(file, self.cls_file):
+            file = self.cls_file(file.server_filename, file.filename)
+        return file
+
     def add_file(self, file_path: str, **kwargs: Any) -> T_FILE:
         """Add a file to the task by uploading it.
 
@@ -511,9 +552,7 @@ class Task(
             ValueError: If the file extension is not supported or the task
                 is not started.
         """
-        self._file_manager.validate_extension(file_path)
-        self._state_manager.validate_task_started()
-        file = self.upload_file(self.get_task_id(), file_path, kwargs)
+        file = self._validate_and_upload_file(file_path, **kwargs)
         self.append_file(file)
         return file
 
@@ -521,7 +560,7 @@ class Task(
         self,
         task: str | None,
         file_path: str,
-        extra_params: Dict[str, Any] | None = None,
+        extra_params: dict[str, Any] | None = None,
     ) -> T_FILE:
         """Upload a file to the API for the current task.
 
@@ -541,7 +580,7 @@ class Task(
 
         with open(file_path, "rb") as file_obj:
             files = {"file": file_obj}
-            data: Dict[str, Any] = {"task": task, "v": self.VERSION}
+            data: dict[str, Any] = {"task": task, "v": self.VERSION}
             if extra_params:
                 data.update(extra_params)
             body = {"files": files, "data": data}
@@ -555,7 +594,7 @@ class Task(
         self,
         server: str | None = None,
         task_id: str | None = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get the status of the current task from the API.
 
         Args:
@@ -663,15 +702,6 @@ class Task(
         self._download_manager.output_filename = filename
         return self
 
-    def _to_payload(self) -> Dict[str, Any]:
-        """Update the payload with the current files list.
-
-        Returns:
-            Dict[str, Any]: The updated payload dictionary.
-        """
-        self._payload["files"] = self.files
-        return super()._to_payload()
-
     @property
     def output_file(self) -> bytes | None:
         """Get the downloaded file content.
@@ -772,13 +802,13 @@ class Task(
         return self._state_manager.remaining_credits
 
     def _validate_file_extension(
-        self, file_path: str, extension_list: List[str] | None = None
+        self, file_path: str, extension_list: list[str] | None = None
     ) -> None:
         """Validate file extension.
 
         Args:
             file_path (str): Path to the file.
-            extension_list (List[str] | None): List of allowed extensions.
+            extension_list (list[str | None]): List of allowed extensions.
 
         Raises:
             ValueError: If the file extension is not allowed.
@@ -793,8 +823,8 @@ class Task(
         """
         self._state_manager.validate_task_started()
 
-    def get_extension_list(self) -> List[str]:
-        """Get the list of allowed image file extensions.
+    def get_extension_list(self) -> list[str]:
+        """Get the list of allowed file extensions.
 
         Returns:
             List[str]: List of allowed extensions.
@@ -802,7 +832,7 @@ class Task(
         return self._file_manager.get_extension_list()
 
     def get_extension_list_format(
-        self, extension_list: List[str] | None = None
+        self, extension_list: list[str] | None = None
     ) -> tuple:
         """Get extensions in dot format.
 
@@ -838,7 +868,7 @@ class Task(
         """
         self._state_manager.set_remaining_pages(remaining_pages)
 
-    def validate_body(self, body: Dict[str, Any]) -> bool:
+    def validate_body(self, body: dict[str, Any]) -> bool:
         """Validate request body.
 
         Args:
@@ -852,7 +882,7 @@ class Task(
         """
         return self._payload_builder.validate_body(body)
 
-    def build_body(self) -> Dict[str, Any]:
+    def build_body(self) -> dict[str, Any]:
         """Build request body.
 
         Returns:

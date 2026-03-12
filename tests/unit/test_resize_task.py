@@ -19,7 +19,6 @@ from iloveimg.exceptions import IntOutOfRangeError, InvalidChoiceError
 from .base_test import AbstractUnitTaskTest
 
 
-# pylint: disable=protected-access
 class TestResizeTask(AbstractUnitTaskTest):
     """Unit test suite for the ResizeTask class."""
 

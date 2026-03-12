@@ -1,4 +1,8 @@
-"""Test the UpScaleTask class."""
+"""Unit tests for the UpScaleTask class in the iloveimg module.
+
+These tests verify the correct behavior and parameter validation for image upscaling
+tasks using UpScaleTask.
+"""
 
 import pytest
 
@@ -9,7 +13,12 @@ from .base_test import AbstractUnitTaskTest
 
 
 class TestUpScaleTask(AbstractUnitTaskTest):
-    """Test the UpScaleTask class."""
+    """
+    Unit tests for UpScaleTask.
+
+    Covers initialization, valid and invalid multiplier settings,
+    and parameter validation.
+    """
 
     _task_class = UpScaleTask
     _task_tool = "upscaleimage"
@@ -25,9 +34,9 @@ class TestUpScaleTask(AbstractUnitTaskTest):
     @pytest.mark.parametrize("multiplier", [2, 4])
     def test_set_multiplier_valid(self, my_task, multiplier):
         """
-        Test setting valid upscale dimensions.
+        Test setting valid upscale multiplier values.
 
-        Verifies that width, height, x, and y can be set to valid values.
+        Verifies that the multiplier can be set to allowed values (2 or 4).
         """
         my_task.multiplier = multiplier
         assert my_task.multiplier == multiplier
@@ -35,9 +44,9 @@ class TestUpScaleTask(AbstractUnitTaskTest):
     @pytest.mark.parametrize("multiplier", [6, -2])
     def test_set_multipliers_invalid(self, my_task, multiplier):
         """
-        Test setting invalid upscale dimensions.
+        Test setting invalid upscale multiplier values.
 
-        Verifies that setting invalid values for width, height, x, or y raises an
+        Verifies that setting a multiplier outside the allowed set raises an
             exception.
         """
         with pytest.raises(IntNotInAllowedSetError) as excinfo:

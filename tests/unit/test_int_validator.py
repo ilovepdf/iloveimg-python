@@ -13,8 +13,6 @@ from iloveimg.exceptions import (
 )
 from iloveimg.validators import IntValidator
 
-# pylint: disable=protected-access
-
 
 class TestIntValidatorType:
     """Tests for IntValidator.validate_type()."""

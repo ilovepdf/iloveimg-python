@@ -1,15 +1,15 @@
-"""Choice validation utilities for iloveimg-python library.
+"""Choice validation utilities for ilovepdf-python library.
 
 Provides the ChoiceValidator class for validating values against a set
 of allowed choices.
 """
 
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
-from iloveimg.exceptions import InvalidChoiceError
+from ..exceptions import InvalidChoiceError
 
 
-# pylint: disable=too-few-public-methods
 class ChoiceValidator:
     """Validates that values are among allowed choices.
 
@@ -51,7 +51,7 @@ class ChoiceValidator:
             allowed_display = str(allowed)
 
         error_message = (
-            f"Invalid value `{param_name}`: value must be one of " f"{allowed_display}."
+            f"Invalid value `{param_name}`: value must be one of {allowed_display}."
         )
 
         if value not in allowed:

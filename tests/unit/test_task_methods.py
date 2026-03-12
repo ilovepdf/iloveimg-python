@@ -14,8 +14,6 @@ from iloveimg import Task
 from iloveimg.exceptions import StartException
 from iloveimg.file import File
 
-# pylint: disable=protected-access
-
 
 class DummyTask(Task):
     """Dummy Task class for testing."""
@@ -151,7 +149,7 @@ class TestTaskUploadFile:
         """Test upload_file raises error for nonexistent file."""
         task = DummyTask("public_key", "secret_key", make_start=False)
 
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(FileNotFoundError) as excinfo:
             task.upload_file("task_123", "/nonexistent/file.jpg")
         assert "does not exist" in str(excinfo.value)
 

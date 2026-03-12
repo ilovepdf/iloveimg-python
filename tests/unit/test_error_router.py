@@ -16,8 +16,6 @@ from iloveimg.exceptions import (
 )
 from iloveimg.iloveimg_api import ErrorRouter
 
-# pylint: disable=protected-access
-
 
 class TestErrorRouterUploadErrors:
     """Unit tests for upload error handling in ErrorRouter."""

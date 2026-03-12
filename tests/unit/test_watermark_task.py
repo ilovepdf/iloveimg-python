@@ -20,7 +20,6 @@ from .base_test import (
 )
 
 
-# pylint: disable=protected-access
 class TestWatermarkElement(AbstractUnitTaskElementTest):
     """Test the WatermarkElement class."""
 

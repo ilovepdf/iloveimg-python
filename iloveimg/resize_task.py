@@ -11,8 +11,7 @@ sent to the iLoveIMG API when executing the task.
 
 from typing import Literal
 
-from iloveimg.abstract_task_element import Payload
-
+from .abstract_task_element import Payload
 from .task import Task
 from .validators import ChoiceValidator, IntValidator
 

@@ -30,7 +30,6 @@ class TestCropTaskIntegration(BaseTaskIntegrationTest):
 
     task_class = CropTask
 
-    # def test_full_basic_crop_flow(self, crop_task):
     def test_full_basic_crop_flow(self):
         """
         Test the full flow: add a single file, set width, height, execute, and download.

@@ -5,23 +5,22 @@ This module provides the Iloveimg class for managing API keys, tokens,
 file encryption, and sending requests to the iLoveIMG API endpoints.
 """
 
-import hashlib
 import json
 import logging
 import os
 import pprint
-import secrets
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Tuple
+from typing import Any
 
 import jwt
 import requests
 from dotenv import find_dotenv, load_dotenv
 from requests.exceptions import JSONDecodeError
 
-from iloveimg.exceptions import (
+from .exceptions import (
     AuthException,
     DownloadException,
     ProcessException,
@@ -38,10 +37,10 @@ JWT_ALGORITHM = "HS256"
 TOKEN_EXPIRE_SECONDS = 3600
 TOKEN_CACHE_BUFFER_SECONDS = 120
 DEFAULT_TIME_DELAY_SECONDS = 5400
-DEFAULT_TIMEOUT_SECONDS = int(os.environ.get("DEFAULT_TIMEOUT_SECONDS", 60))
+DEFAULT_TIMEOUT_SECONDS = int(os.getenv("DEFAULT_TIMEOUT_SECONDS", "60"))
 API_VERSION = "v1"
-START_SERVER_URL = os.environ.get("START_SERVER_URL", "https://api.ilovepdf.com")
-API_HOST = os.environ.get("API_HOST", "api.ilovepdf.com")
+START_SERVER_URL = os.getenv("START_SERVER_URL", "https://api.ilovepdf.com")
+API_HOST = os.getenv("API_HOST", "api.ilovepdf.com")
 LIBRARY_VERSION = "python.0.0.1"
 
 # HTTP Status Codes
@@ -56,43 +55,34 @@ HTTP_INTERNAL_SERVER_ERROR = 500
 # Endpoints requiring large timeout
 LARGE_TIMEOUT_ENDPOINTS = ["process", "upload"]
 
-# pylint: disable=too-few-public-methods
 
-
-def _setup_logging() -> logging.Logger:
+def _setup_logging(loglevel, logfile=None) -> logging.Logger:
     """Configure and return logger for this module.
 
     Returns:
         logging.Logger: Configured logger instance.
     """
-    loglevel = os.environ.get("PYTHONLOGLEVEL", "INFO").upper()
-    logging.basicConfig(level=loglevel)
+
+    params: dict[str, Any] = {
+        "level": loglevel,
+        "format": "%(asctime)s %(levelname)s %(name)s: %(message)s",
+    }
+
+    if logfile:
+        params.update({"filemode": "a", "filename": logfile, "force": True})
+
+    logging.basicConfig(**params)
     logging.getLogger("urllib3").setLevel(loglevel)
-    if loglevel == "DEBUG":
-        logging.debug("DEBUG mode activated!")
     logger = logging.getLogger(__name__)
     logger.setLevel(loglevel)
+    if loglevel == "DEBUG":
+        logger.debug("DEBUG mode activated!")
     return logger
 
 
-_logger = _setup_logging()
-
-
-def rand_sha256(length: int) -> str:
-    """Generate a random SHA256 hash of a given length.
-
-    Args:
-        length (int): Desired length of the hash string.
-
-    Returns:
-        str: Random SHA256 hash truncated to specified length.
-
-    Example:
-        key = rand_sha256(32)
-    """
-    random_data = str(time.time()) + str(secrets.randbelow(80001) + 10000)
-    sha = hashlib.sha256(random_data.encode()).hexdigest()
-    return sha[:length]
+env_loglevel = os.getenv("PYTHONLOGLEVEL", "INFO").upper()
+env_logfile = os.getenv("PYTHONLOGFILE")
+_logger = _setup_logging(env_loglevel, env_logfile)
 
 
 @dataclass
@@ -102,13 +92,13 @@ class AuthManager:
     Attributes:
         secret_key (str): API secret key for authentication.
         public_key (str): API public key for authentication.
-        token_cache (Optional[Tuple[str, int]]): Cached token and expiration.
-        token (Optional[str]): Current JWT token.
+        token_cache (tuple[str, int] | None): Cached token and expiration.
+        token (str | None): Current JWT token.
     """
 
     secret_key: str
     public_key: str
-    token_cache: Tuple[str, int] | None = None
+    token_cache: tuple[str, int] | None = None
     token: str | None = None
 
 
@@ -117,10 +107,10 @@ class ServerConfig:
     """Stores server configuration and timeout settings for iLoveIMG API.
 
     Attributes:
-        worker_server (Optional[str]): Worker server URL for task processing.
+        worker_server (str | None): Worker server URL for task processing.
         time_delay (int): Time delay in seconds. Default is 5400.
         timeout (int): Request timeout in seconds. Default is 10.
-        timeout_large (Optional[int]): Timeout for large operations.
+        timeout_large (int | None): Timeout for large operations.
     """
 
     worker_server: str | None = None
@@ -135,7 +125,7 @@ class EncryptionConfig:
 
     Attributes:
         encrypted (bool): Whether file encryption is enabled.
-        encrypt_key (Optional[str]): Encryption key for file operations.
+        encrypt_key (str | None): Encryption key for file operations.
     """
 
     encrypted: bool = False
@@ -202,14 +192,14 @@ class RequestBuilder:
             return self.server_config.timeout_large
         return self.server_config.timeout
 
-    def build_headers(self, endpoint: str) -> Dict[str, str]:
+    def build_headers(self, endpoint: str) -> dict[str, str]:
         """Build headers for the API request.
 
         Args:
             endpoint (str): API endpoint path.
 
         Returns:
-            Dict[str, str]: Request headers.
+            dict[str, str]: Request headers.
         """
         if endpoint == "auth":
             return {}
@@ -221,23 +211,27 @@ class RequestBuilder:
 
     def prepare_params(
         self,
-        params: Dict[str, Any] | None,
-        headers: Dict[str, str],
+        params: dict[str, Any] | None,
+        headers: dict[str, str],
         endpoint: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Prepare and normalize request parameters.
 
         Args:
-            params (Optional[Dict[str, Any]]): Original parameters.
-            headers (Dict[str, str]): Request headers.
+            params (dict[str, Any] | None): Original parameters.
+            headers (dict[str, str]): Request headers.
             endpoint (str): API endpoint path.
 
         Returns:
-            Dict[str, Any]: Prepared request parameters.
+            dict[str, Any]: Prepared request parameters.
         """
         params = dict(params or {})
         params.setdefault("headers", headers)
-        params.setdefault("data", {})
+
+        # Only add data dict if not a start endpoint
+        # (GET requests don't need empty data)
+        if not endpoint.startswith("start/"):
+            params.setdefault("data", {})
 
         # Special handling for process endpoint
         if endpoint == "process":
@@ -246,6 +240,11 @@ class RequestBuilder:
             if "files" in params["data"]:
                 params["headers"]["Content-Type"] = "application/json"
                 params["data"] = json.dumps(params["data"])
+        if endpoint == "signature":
+            params["headers"]["Accept"] = "application/json"
+            if "data" in params:
+                params["json"] = params["data"]
+                del params["data"]
         return params
 
 
@@ -257,14 +256,14 @@ class ResponseHandler:
     """
 
     @staticmethod
-    def parse_json(response: requests.Response) -> Dict[str, Any]:
+    def parse_json(response: requests.Response) -> dict[str, Any]:
         """Parse JSON from response body.
 
         Args:
             response (requests.Response): The HTTP response.
 
         Returns:
-            Dict[str, Any]: Parsed JSON or error dict if parsing fails.
+            dict[str, Any]: Parsed JSON or error dict if parsing fails.
         """
         try:
             return response.json()
@@ -297,19 +296,19 @@ class ErrorRouter:
 
     def __init__(self) -> None:
         """Initialize ErrorRouter."""
-        self.endpoint_handlers: Dict[str, Callable[[Any, int], None]] = {
+        self.endpoint_handlers: dict[str, Callable[[Any, int], None]] = {
             "upload": self._handle_upload_response,
             "process": self._handle_process_response,
         }
 
     def route(
-        self, endpoint: str, response_body: Dict[str, Any], response_code: int
+        self, endpoint: str, response_body: dict[str, Any], response_code: int
     ) -> None:
         """Route error handling based on endpoint and status code.
 
         Args:
             endpoint (str): API endpoint path.
-            response_body (Dict[str, Any]): Response body.
+            response_body (dict[str, Any]): Response body.
             response_code (int): HTTP status code.
 
         Raises:
@@ -347,12 +346,12 @@ class ErrorRouter:
 
     @staticmethod
     def _handle_upload_response(
-        response_body: Dict[str, Any] | str, response_code: int
+        response_body: dict[str, Any] | str, response_code: int
     ) -> None:
         """Handle upload error responses.
 
         Args:
-            response_body (Union[Dict[str, Any], str]): Response body.
+            response_body (dict[str, Any] | str): Response body.
             response_code (int): HTTP status code.
 
         Raises:
@@ -368,12 +367,12 @@ class ErrorRouter:
 
     @staticmethod
     def _handle_process_response(
-        response_body: Dict[str, Any], response_code: int
+        response_body: dict[str, Any], response_code: int
     ) -> None:
         """Handle process error responses.
 
         Args:
-            response_body (Dict[str, Any]): Response body.
+            response_body (dict[str, Any]): Response body.
             response_code (int): HTTP status code.
 
         Raises:
@@ -387,12 +386,12 @@ class ErrorRouter:
 
     @staticmethod
     def _handle_download_response(
-        response_body: Dict[str, Any], response_code: int
+        response_body: dict[str, Any], response_code: int
     ) -> None:
         """Handle download error responses.
 
         Args:
-            response_body (Dict[str, Any]): Response body.
+            response_body (dict[str, Any]): Response body.
             response_code (int): HTTP status code.
 
         Raises:
@@ -406,12 +405,12 @@ class ErrorRouter:
 
     @staticmethod
     def _handle_start_response(
-        response_body: Dict[str, Any], response_code: int
+        response_body: dict[str, Any], response_code: int
     ) -> None:
         """Handle start error responses.
 
         Args:
-            response_body (Dict[str, Any]): Response body.
+            response_body (dict[str, Any]): Response body.
             response_code (int): HTTP status code.
 
         Raises:
@@ -428,13 +427,13 @@ class ErrorRouter:
 
     @staticmethod
     def _handle_bad_request(
-        endpoint: str, response_body: Dict[str, Any], response_code: int
+        endpoint: str, response_body: dict[str, Any], response_code: int
     ) -> None:
         """Handle bad request (400) error responses.
 
         Args:
             endpoint (str): API endpoint path.
-            response_body (Dict[str, Any]): Response body.
+            response_body (dict[str, Any]): Response body.
             response_code (int): HTTP status code.
 
         Raises:
@@ -442,6 +441,12 @@ class ErrorRouter:
             SignatureException: For signature-related errors.
             ProcessException: For other bad request errors.
         """
+
+        _logger.debug(
+            "\nBad request error:\n%s",
+            pprint.pformat(response_body, indent=4),
+        )
+
         if "task" in endpoint:
             raise TaskException("Invalid task id", response_body, response_code)
 
@@ -460,12 +465,12 @@ class ErrorRouter:
 
     @staticmethod
     def _handle_generic_error(
-        response_body: Dict[str, Any], response_code: int
+        response_body: dict[str, Any], response_code: int
     ) -> None:
         """Handle generic error responses.
 
         Args:
-            response_body (Dict[str, Any]): Response body.
+            response_body (dict[str, Any]): Response body.
             response_code (int): HTTP status code.
 
         Raises:
@@ -480,7 +485,7 @@ class ErrorRouter:
         )
 
 
-class Iloveimg:  # pylint: disable=too-many-public-methods
+class Iloveimg:
     """
     Class for interacting with the iLoveIMG API.
 
@@ -540,7 +545,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
         """Validate that an API key is a non-empty string.
 
         Args:
-            key (Optional[str]): The API key to validate.
+            key (str | None): The API key to validate.
             key_name (str): Name of the key for error messages.
 
         Raises:
@@ -548,7 +553,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
         """
         if not key or not isinstance(key, str) or key.strip() == "":
             raise ValueError(
-                f"A non-empty {key_name} string is required for IloveIMG "
+                f"A non-empty {key_name} string is required for IlovePDF "
                 f"(argument or ILOVEIMG_{key_name.upper()} env variable)."
             )
 
@@ -707,13 +712,14 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
             str: Locally generated JWT token.
         """
         now = int(datetime.now(timezone.utc).timestamp())
-        exp = now + TOKEN_EXPIRE_SECONDS
+        delay = self.server.time_delay
+        exp = now + TOKEN_EXPIRE_SECONDS + delay
 
         payload = {
             "iss": API_HOST,
             "aud": API_HOST,
-            "iat": now,
-            "nbf": now,
+            "iat": now - delay,
+            "nbf": now - delay,
             "exp": exp,
             "jti": self.auth.public_key,
         }
@@ -731,7 +737,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
             token (str): The JWT token to cache.
         """
         now = int(datetime.now(timezone.utc).timestamp())
-        exp = now + TOKEN_EXPIRE_SECONDS
+        exp = now + TOKEN_EXPIRE_SECONDS + self.server.time_delay
         self.auth.token_cache = (token, exp)
         self.auth.token = token
 
@@ -745,7 +751,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
             return self.auth.token
 
         current_time = int(time.time())
-        token_dict: Dict[str, int | str | None] = {
+        token_dict: dict[str, int | str | None] = {
             "iss": API_HOST,
             "aud": API_HOST,
             "iat": current_time - self.server.time_delay,
@@ -795,7 +801,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
         """Get the worker server URL.
 
         Returns:
-            Optional[str]: Worker server URL if set, otherwise None.
+            str | None: Worker server URL if set, otherwise None.
         """
         return self.server.worker_server
 
@@ -803,7 +809,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
         """Set the worker server URL.
 
         Args:
-            worker_server (Optional[str]): The worker server URL for task
+            worker_server (str | None): The worker server URL for task
                 processing, or None to clear it.
         """
         self.server.worker_server = worker_server
@@ -820,7 +826,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
         """Get the encryption key.
 
         Returns:
-            Optional[str]: The encryption key if set, otherwise None.
+            str | None: The encryption key if set, otherwise None.
         """
         return self.encryption.encrypt_key
 
@@ -828,7 +834,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
         self,
         method: str,
         endpoint: str,
-        params: Dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
         start: bool = False,
     ) -> requests.Response:
         """Send a request to the iLoveIMG API.
@@ -836,7 +842,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
         Args:
             method (str): HTTP method (GET, POST, etc.).
             endpoint (str): API endpoint path.
-            params (Optional[Dict[str, Any]]): Request parameters.
+            params (dict[str, Any] | None): Request parameters.
             start (bool): Whether this is a start server request.
 
         Returns:
@@ -869,7 +875,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
         return self._handle_response(response, endpoint)
 
     def _execute_request(
-        self, method: str, url: str, timeout: int, params: Dict[str, Any]
+        self, method: str, url: str, timeout: int, params: dict[str, Any]
     ) -> requests.Response:
         """Execute the HTTP request.
 
@@ -877,7 +883,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
             method (str): HTTP method.
             url (str): Complete URL.
             timeout (int): Request timeout.
-            params (Dict[str, Any]): Request parameters.
+            params (dict[str, Any]): Request parameters.
 
         Returns:
             requests.Response: The HTTP response.
@@ -912,7 +918,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
             DownloadException: If download fails.
             StartException: If start operation fails.
         """
-        response_code: int = response.status_code
+        response_code: int = response.status_code or 0
 
         _logger.debug(
             "RESPONSE: status=%s, content_type=%s",
@@ -939,7 +945,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
 
         return response
 
-    def get_status(self, server: str, task_id: str) -> Dict[str, Any]:
+    def get_status(self, server: str, task_id: str) -> dict[str, Any]:
         """Get the status of a task.
 
         Args:
@@ -947,7 +953,7 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
             task_id (str): The task identifier.
 
         Returns:
-            Dict[str, Any]: Task status information.
+            dict[str, Any]: Task status information.
         """
         original_worker_server = self.get_worker_server()
         self.set_worker_server(server)
@@ -955,11 +961,11 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
         self.set_worker_server(original_worker_server)
         return response.json()
 
-    def get_updated_info(self) -> Dict[str, Any]:
+    def get_updated_info(self) -> dict[str, Any]:
         """Get updated information about the account.
 
         Returns:
-            Dict[str, Any]: Account information including remaining credits.
+            dict[str, Any]: Account information including remaining credits.
         """
         data = {"v": self.VERSION}
         body = {"data": data}
@@ -967,11 +973,11 @@ class Iloveimg:  # pylint: disable=too-many-public-methods
         self.info = response.json()
         return self.info
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         """Get information about the account.
 
         Returns:
-            Dict[str, Any]: Account information.
+            dict[str, Any]: Account information.
         """
         return self.get_updated_info()
 
