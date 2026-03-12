@@ -16,27 +16,20 @@ Develop and automate image processing tasks like Compress, Convert, Crop, Resize
 
 - Python 3.10 to 3.14
 
----
-
 ## Installation
 
-Install from PyPI:
+You can install the library via [PIP](https://pypi.org/project/pip/). Run the following command:
 
 ```bash
 pip install iloveimg
 ```
 
-Or install the latest version from source:
+For other install options (source, pre-release), see [INSTALL.md](INSTALL.md).
 
-```bash
-pip install -U git+https://github.com/ilovepdf/iloveimg-python.git@main#egg=iloveimg
-```
+## Quick Start
 
----
-
-## Getting Started
-
-Simple usage looks like:
+1. Get your API keys from [https://developer.iloveimg.com](https://developer.iloveimg.com)
+2. Run a task:
 
 ```python
 from iloveimg import CompressTask
@@ -54,8 +47,8 @@ task.download("output_folder")
 - Core library: [`iloveimg/`](iloveimg/README.md)
 - Example scripts: [`samples/`](samples/README.md)
 - Unit & integration tests: [`tests/`](tests/README.md)
+- Installation: [`INSTALL.md`](INSTALL.md) - All install options
+- Development: [`DEVELOPMENT.md`](DEVELOPMENT.md) - Contributing & setup
 - Docker & environment setup: [`.docker/`](.docker/README.md)
 
-For detailed API documentation, visit the [official iLoveIMG API docs](https://developer.iloveimg.com/docs).
-
----
+For full API docs, visit [developer.iloveimg.com](https://developer.iloveimg.com/docs)

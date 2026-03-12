@@ -4,12 +4,12 @@ This directory contains all test code for the **iLoveIMG Python** library. Tests
 
 ## Structure
 
-- `unit/`  
-  Contains unit tests for individual modules and classes.  
+- `unit/`
+  Contains unit tests for individual modules and classes.
   See [`unit/README.md`](unit/README.md) for details.
 
-- `integration/`  
-  Contains integration tests that interact with the iLoveIMG API and test complete workflows.  
+- `integration/`
+  Contains integration tests that interact with the iLoveIMG API and test complete workflows.
   See [`integration/README.md`](integration/README.md) for details.
 
 ## Running Tests

@@ -12,6 +12,7 @@ Each script illustrates a specific task, such as compressing, resizing, converti
 - Scripts are grouped by task type (compression, conversion, cropping, etc.).
 - All scripts include a brief description and helpful comments at the top.
 - Examples follow the project documentation and style guidelines.
+- The [`live/`](live/README.md) subdirectory contains runnable versions of these scripts configured for direct execution against the iLoveIMG API using environment variables and real sample files.
 
 ---
 
@@ -25,7 +26,7 @@ Before running any example script:
    - `ILOVEIMG_SECRET_KEY`
    - Optionally, `FOLDER_SAMPLE_PATH` for sample files
 
-   You can copy `.docker/.env.sample` to `.docker/.env` and fill in your credentials.
+   You can copy `.env.example` to `.env` and fill in your credentials.
 
 2. **Install dependencies**
    Install the library and its dependencies:
