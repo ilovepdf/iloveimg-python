@@ -36,6 +36,8 @@ Unit tests are designed to verify the correctness of individual functions, class
 ### Validators
 
 - `test_choice_validator.py` - Choice validation for restricted value sets
+- `test_date_validator.py` - Date format acceptance and min/max boundary checks
+- `test_float_validator.py` - Float type, positivity, range, and options validation
 - `test_int_validator.py` - Integer validation with range and option constraints
 - `test_string_validator.py` - StringValidator type enforcement and non-empty checks
 
