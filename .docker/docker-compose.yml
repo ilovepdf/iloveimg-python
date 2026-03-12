@@ -2,9 +2,6 @@ x-python-base: &python_base
   tty: true
   env_file:
     - ../.env
-  # volumes:
-  #   - ../:/src # Mount entire project for live code changes
-  # working_dir: /src
 
 services:
   python310:
