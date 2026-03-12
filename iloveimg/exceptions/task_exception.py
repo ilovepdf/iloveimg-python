@@ -1,4 +1,4 @@
-"""Exception classes for the iLoveIMG Python API."""
+"""Exception class for task-related errors in the iLoveIMG API."""
 
 from .base_custom_exception import BaseCustomException
 

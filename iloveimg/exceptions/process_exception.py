@@ -1,4 +1,4 @@
-"""Module containing custom exception classes for iLoveIMG API tasks."""
+"""Exception class for processing phase errors in the iLoveIMG API."""
 
 
 class ProcessException(Exception):

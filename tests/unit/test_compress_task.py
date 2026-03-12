@@ -13,7 +13,6 @@ from iloveimg.exceptions import InvalidChoiceError
 from .base_test import AbstractUnitTaskTest
 
 
-# pylint: disable=protected-access
 class TestCompressTask(AbstractUnitTaskTest):
     """
     Unit tests for CompressTask.

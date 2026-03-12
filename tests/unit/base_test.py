@@ -16,9 +16,10 @@ import pytest
 
 from iloveimg import File, Task
 from iloveimg.abstract_task_element import AbstractTaskElement
+from iloveimg.exceptions import MissingPayloadFieldError
+from iloveimg.file import BaseFile
 
 
-# pylint: disable=protected-access
 class AbstractUnitTaskElementTest(ABC):
     """
     Base class for unit tests of ILoveIMG task element classes.
@@ -26,13 +27,9 @@ class AbstractUnitTaskElementTest(ABC):
     Subclasses must set `_task_class` to a concrete subclass of AbstractTaskElement.
 
     Attributes:
-        _task_class (type): Concrete task element class to test.
+        _task_class (Type): Concrete task element class to test.
         _check_payload_keys (bool): If True, check expected payload keys.
         _check_unexpected_keys (bool): If True, check for unexpected payload keys.
-
-    Example:
-        class TestAnyTaskElement(AbstractUnitTaskElementTest):
-            _task_class = AnyTaskElement  # Must inherit from AbstractTaskElement
 
     Example:
         class TestAnyUnitTaskElement(AbstractUnitTaskElementTest):
@@ -43,6 +40,11 @@ class AbstractUnitTaskElementTest(ABC):
                 # At least one test method must be defined in each test class.
                 # Replace this with meaningful assertions for your task element.
                 assert my_task is not None
+
+            def test_missing_required_fields_raises(self, my_task):
+                \"\"\"Test that MissingPayloadFieldError is raised when required fields
+                are missing.\"\"\"
+                self.assert_missing_required_fields_raise(my_task, ["attr1", "attr2"])
     """
 
     _task_class: type
@@ -133,21 +135,78 @@ class AbstractUnitTaskElementTest(ABC):
         )
         assert not unexpected_keys, f"Payload has unexpected keys: {unexpected_keys}"
 
+    def assert_missing_required_fields_raise(self, my_task, attrs: list[str]):
+        """
+        Assert that a MissingPayloadFieldError is raised when required fields are
+        missing.
 
-class AbstractUnitFileTest(AbstractUnitTaskElementTest):
+        This method sets the specified attributes in the task's payload to None,
+        then checks that calling _to_payload() raises a MissingPayloadFieldError
+        with the correct missing fields.
+
+        Args:
+            my_task: The task element instance to test.
+            attrs (list[str]): List of attribute names that should be missing.
+
+        Raises:
+            AssertionError: If the exception is not raised or the missing fields
+                do not match.
+        """
+        values = {attr: None for attr in attrs}
+        my_task._payload.update(values)
+
+        with pytest.raises(MissingPayloadFieldError) as excinfo:
+            my_task._to_payload()
+        missing = excinfo.value.missing_fields
+        assert set(missing) == set(attrs)
+
+
+class AbstractBaseFileTest(AbstractUnitTaskElementTest):
     """
-    Base class for unit tests of ILoveIMG task element classes.
+    Base class for unit tests of ILoveIMG File classes.
 
-    Subclasses must set `_task_class` to a concrete subclass of AbstractTaskElement.
+    Subclasses must set `_task_class` to a concrete subclass of File.
 
     Attributes:
-        _task_class (type): Concrete task element class to test.
+        _task_class (Type): Concrete task element class to test.
         _check_payload_keys (bool): If True, check expected payload keys.
         _check_unexpected_keys (bool): If True, check for unexpected payload keys.
 
     Example:
         class TestAnyTaskElement(AbstractUnitTaskElementTest):
-            _task_class = AnyTaskElement  # Must inherit from AbstractTaskElement
+            _task_class = AnyTaskElement  # Must inherit from File
+
+            def test_initialization_sets_default_values(self, my_task):
+                # At least one test method must be defined in each test class.
+                # Replace this with meaningful assertions for your file task element.
+                assert my_task is not None
+    """
+
+    def _validate_task_class(self):
+        super()._validate_task_class()
+        if not issubclass(self._task_class, BaseFile):
+            raise TypeError("Invalid _task_class: must be a subclass of File.")
+
+    @pytest.fixture
+    def my_task(self):
+        self._validate_task_class()
+        return self._task_class("some_server_filename", "some_filename")
+
+
+class AbstractUnitFileTest(AbstractBaseFileTest):
+    """
+    Base class for unit tests of ILoveIMG File classes.
+
+    Subclasses must set `_task_class` to a concrete subclass of File.
+
+    Attributes:
+        _task_class (Type): Concrete task element class to test.
+        _check_payload_keys (bool): If True, check expected payload keys.
+        _check_unexpected_keys (bool): If True, check for unexpected payload keys.
+
+    Example:
+        class TestAnyTaskElement(AbstractUnitTaskElementTest):
+            _task_class = AnyTaskElement  # Must inherit from File
 
             def test_initialization_sets_default_values(self, my_task):
                 # At least one test method must be defined in each test class.
@@ -160,18 +219,6 @@ class AbstractUnitFileTest(AbstractUnitTaskElementTest):
         if not issubclass(self._task_class, File):
             raise TypeError("Invalid _task_class: must be a subclass of File.")
 
-    @pytest.fixture
-    def my_task(self):
-        self._validate_task_class()
-        return self._task_class("server_filename.pdf", "sample.pdf")
-
-    def test_initialization_sets_filenames(self, my_task):
-        """
-        Test that the task element initializes with the correct filenames.
-        """
-        assert my_task.server_filename == "server_filename.pdf"
-        assert my_task.filename == "sample.pdf"
-
 
 class AbstractUnitTaskTest(AbstractUnitTaskElementTest):
     """
@@ -181,7 +228,7 @@ class AbstractUnitTaskTest(AbstractUnitTaskElementTest):
     to the tool name.
 
     Attributes:
-        _task_class (type): Concrete task class to test.
+        _task_class (Type): Concrete task class to test.
         _task_tool (str): Tool name for the task.
 
     Example:
@@ -209,6 +256,8 @@ class AbstractUnitTaskTest(AbstractUnitTaskElementTest):
         if not issubclass(self._task_class, Task):
             raise TypeError("Invalid _task_class: must be a subclass of Task.")
 
+        assert self._task_class._task_status is not None
+
     @pytest.fixture
     def my_task(self):
         """
@@ -233,3 +282,4 @@ class AbstractUnitTaskTest(AbstractUnitTaskElementTest):
             my_task: The task instance created by the fixture.
         """
         assert my_task._tool == my_task.tool == self._task_tool
+        assert my_task._task_status == self._task_class._task_status

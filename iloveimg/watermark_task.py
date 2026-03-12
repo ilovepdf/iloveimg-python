@@ -12,7 +12,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import List, Literal
+from typing import Literal
 
 from .abstract_task_element import AbstractTaskElement, Payload
 from .file import File
@@ -109,7 +109,7 @@ class WatermarkElement(AbstractTaskElement):
         "server_filename": None,
     }
 
-    def __init__(self, parent_task: "WatermarkTask | None" = None):
+    def __init__(self, parent_task: WatermarkTask | None = None):
         super().__init__()
         self._parent_task = parent_task
         self._file: File | None = None
@@ -615,7 +615,7 @@ class WatermarkTask(Task):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.elements: List[WatermarkElement] = []
+        self.elements: list[WatermarkElement] = []
 
     def add_element(self, element: WatermarkElement | None = None) -> WatermarkElement:
         """

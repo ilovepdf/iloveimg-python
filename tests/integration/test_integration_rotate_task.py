@@ -6,7 +6,6 @@ Covers:
 
 import unittest
 
-# from typing_extensions import Type
 from iloveimg.rotate_task import RotateTask
 
 from .base_task_integration_test import BaseTaskIntegrationTest

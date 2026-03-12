@@ -15,8 +15,6 @@ from .base_test import (
     AbstractUnitTaskTest,
 )
 
-# pylint: disable=protected-access
-
 
 class TestRotateFile(AbstractUnitFileTest):
     """Unit tests for the RotateFile class."""

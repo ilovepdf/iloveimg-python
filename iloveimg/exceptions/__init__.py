@@ -10,6 +10,15 @@ from .choice_errors import (
     InvalidChoiceError,
 )
 from .download_exception import DownloadException
+from .file_errors import FileExtensionNotAllowed, FileTooLargeError
+from .float_errors import (
+    FloatNotInAllowedSetError,
+    FloatOutOfRangeError,
+    InvalidFloatValueError,
+    NegativeFloatError,
+    NotAFloatError,
+    ZeroFloatError,
+)
 from .int_errors import (
     IntNotInAllowedSetError,
     IntOutOfRangeError,
@@ -20,9 +29,11 @@ from .int_errors import (
 )
 from .not_implemented_exception import NotImplementedException
 from .path_exception import PathException
+from .payload_field_errors import MissingPayloadFieldError
 from .process_exception import ProcessException
 from .signature_exception import SignatureException
 from .start_exception import StartException
+from .task_error import TaskConfigurationError
 from .task_exception import TaskException
 from .upload_exception import UploadException
 
@@ -44,4 +55,14 @@ __all__ = [
     "IntNotInAllowedSetError",
     "InvalidChoiceError",
     "BaseCustomException",
+    "MissingPayloadFieldError",
+    "FileExtensionNotAllowed",
+    "FileTooLargeError",
+    "FloatNotInAllowedSetError",
+    "FloatOutOfRangeError",
+    "InvalidFloatValueError",
+    "NegativeFloatError",
+    "NotAFloatError",
+    "ZeroFloatError",
+    "TaskConfigurationError",
 ]

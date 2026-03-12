@@ -7,11 +7,16 @@ for image conversion tasks using ConvertTask.
 import pytest
 
 from iloveimg.convert_task import OUTPUT_FORMAT_OPTIONS, ConvertTask
+from iloveimg.exceptions import (
+    IntOutOfRangeError,
+    InvalidChoiceError,
+    NotAnIntError,
+    TaskConfigurationError,
+)
 
 from .base_test import AbstractUnitTaskTest
 
 
-# pylint: disable=protected-access
 class TestConvertTask(AbstractUnitTaskTest):
     """Unit tests for the ConvertTask class."""
 
@@ -50,9 +55,9 @@ class TestConvertTask(AbstractUnitTaskTest):
     @pytest.mark.parametrize("invalid_fmt", ["pdf", "bmp", "", None, 123])
     def test_convert_to_invalid_formats(self, my_task, invalid_fmt):
         """
-        Test setting invalid output formats raises ValueError.
+        Test setting invalid output formats raises InvalidChoiceError.
         """
-        with pytest.raises(ValueError):
+        with pytest.raises(InvalidChoiceError):
             my_task.convert_to = invalid_fmt
 
     def test_gif_time_setter_and_getter_valid(self, my_task):
@@ -69,19 +74,20 @@ class TestConvertTask(AbstractUnitTaskTest):
     @pytest.mark.parametrize("invalid_time", [0, -10, "50", None, 1.5])
     def test_gif_time_invalid_values(self, my_task, invalid_time):
         """
-        Test gif_time setter raises ValueError for invalid values or wrong
-            convert_to.
+        Test gif_time setter raises IntOutOfRangeError or NotAnIntError for
+        invalid values or wrong convert_to.
         """
         my_task.convert_to = "gif_animation"
-        with pytest.raises(ValueError):
+        with pytest.raises((IntOutOfRangeError, NotAnIntError)):
             my_task.gif_time = invalid_time
 
     def test_gif_time_setter_wrong_convert_to(self, my_task):
         """
-        Test gif_time setter raises ValueError if convert_to is not 'gif_animation'.
+        Test gif_time setter raises TaskConfigurationError if convert_to is
+        'gif_animation'.
         """
         my_task.convert_to = "jpg"
-        with pytest.raises(ValueError):
+        with pytest.raises(TaskConfigurationError):
             my_task.gif_time = 50
 
     def test_gif_loop_setter_and_getter_valid(self, my_task):
@@ -98,10 +104,11 @@ class TestConvertTask(AbstractUnitTaskTest):
     @pytest.mark.parametrize("invalid_loop", [1, 0, "True", None, [], {}])
     def test_gif_loop_invalid_values(self, my_task, invalid_loop):
         """
-        Test gif_loop setter raises ValueError for invalid values or wrong convert_to.
+        Test gif_loop setter raises InvalidChoiceError for invalid values or
+        wrong convert_to.
         """
         my_task.convert_to = "gif_animation"
-        with pytest.raises(ValueError):
+        with pytest.raises(InvalidChoiceError):
             my_task.gif_loop = invalid_loop
 
     def test_gif_loop_setter_wrong_convert_to(self, my_task):
@@ -109,7 +116,7 @@ class TestConvertTask(AbstractUnitTaskTest):
         Test gif_loop setter raises ValueError if convert_to is not 'gif_animation'.
         """
         my_task.convert_to = "png"
-        with pytest.raises(ValueError):
+        with pytest.raises(TaskConfigurationError):
             my_task.gif_loop = True
 
     @pytest.mark.parametrize("convert_to", ("png", "jpg", "gif"))

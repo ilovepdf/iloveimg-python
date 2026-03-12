@@ -5,17 +5,17 @@ Covers file extension validation logic, including edge cases and custom extensio
 
 import pytest
 
+from iloveimg.exceptions import FileExtensionNotAllowed
 from iloveimg.task import Task
 
 from .base_test import AbstractUnitTaskTest
-
-# pylint: disable=protected-access
 
 
 class DummyTask(Task):
     """Generic task class for testing."""
 
     _tool = "nametool"
+    _task_status = "some_status"
 
 
 class TestDummyTask(AbstractUnitTaskTest):
@@ -33,6 +33,7 @@ class TestDummyTask(AbstractUnitTaskTest):
         assert my_task._DEFAULT_PAYLOAD == expected_default_payload
         assert my_task._to_payload() == expected_payload
         assert my_task.tool == "nametool"
+        assert my_task._task_status == "some_status"
         assert my_task.files == []
 
     @pytest.mark.parametrize("tool_name", ["othertool", "anothertool"])
@@ -64,9 +65,8 @@ class TestDummyTask(AbstractUnitTaskTest):
 
     def test_rejects_invalid_extension(self, my_task):
         """Should raise ValueError for non-image extensions."""
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(FileExtensionNotAllowed):
             my_task._validate_file_extension("file.txt")
-        assert "Only image files are supported" in str(excinfo.value)
 
     def test_rejects_file_without_extension(self, my_task):
         """Should raise ValueError for files without extension."""

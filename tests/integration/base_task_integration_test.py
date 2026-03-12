@@ -4,12 +4,13 @@ Provides common setup, teardown, and utility methods for integration tests
 involving iLoveIMG Task classes (e.g., CompressTask, ProtectTask, etc.).
 
 Example:
-    class MyTaskTest(BaseIloveImgTaskIntegrationTest):
+    class MyTaskTest(BaseTaskIntegrationTest):
         task_class = CompressTask
 """
 
 import os
 import shutil
+import tempfile
 from pathlib import Path
 from typing import Generic, TypeVar
 
@@ -17,7 +18,9 @@ import pytest
 
 from iloveimg.task import Task
 
-_OUTPUT_COUNTER_FILE = Path("/tmp/iloveimg_output_counter.txt")
+_OUTPUT_COUNTER_FILE = Path(
+    os.path.join(tempfile.gettempdir(), "iloveimg_output_counter.txt")
+)
 
 
 def get_and_increment_global_counter() -> int:
@@ -59,11 +62,11 @@ class BaseTaskIntegrationTest(Generic[T]):
         sample_file_path (str): Path to the sample image file for testing.
         task_class (type[Task]): The Task class to instantiate (must be set by
             subclass).
-        task (Optional[Task]): Instance of the Task class.
+        task (Task | None): Instance of the Task class.
         downloaded_file (str | None): Path to the downloaded output file.
 
     Example:
-        class MyTaskTest(BaseIloveImgTaskIntegrationTest):
+        class MyTaskTest(BaseTaskIntegrationTest):
             task_class = CompressTask
     """
 
@@ -113,9 +116,8 @@ class BaseTaskIntegrationTest(Generic[T]):
                 "Subclasses must set 'task_class' to a valid Task class."
             )
 
-        # Create and start a new Task instance before each test
+        # Create a new Task instance before each test
         self.task = self.task_class(self.public_key, self.secret_key)
-        self.task.start()
         self.downloaded_file = None
 
         yield
@@ -217,8 +219,13 @@ class BaseTaskIntegrationTest(Generic[T]):
         Example:
             self.execute_task()
         """
+
+        task_status = self.task_class._task_status
+        if not task_status:
+            raise ValueError("Task status is not defined")
+
         self.task.execute()
-        assert self.task.status == "TaskSuccess", (
+        assert self.task.status == task_status, (
             f"Task failed with status: {self.task.status}. "
             f"Message: {getattr(self.task, 'status_message', '')}."
         )
@@ -240,9 +247,9 @@ class BaseTaskIntegrationTest(Generic[T]):
         self.task.download()
         self.downloaded_file = output_filename
 
-        assert os.path.exists(
-            self.downloaded_file
-        ), f"Downloaded file '{self.downloaded_file}' does not exist."
-        assert (
-            os.path.getsize(self.downloaded_file) > 0
-        ), f"Downloaded file '{self.downloaded_file}' is empty."
+        assert os.path.exists(self.downloaded_file), (
+            f"Downloaded file '{self.downloaded_file}' does not exist."
+        )
+        assert os.path.getsize(self.downloaded_file) > 0, (
+            f"Downloaded file '{self.downloaded_file}' is empty."
+        )

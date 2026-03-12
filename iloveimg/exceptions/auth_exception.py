@@ -1,4 +1,4 @@
-"""Module containing custom exceptions for iLoveIMG API authentication errors."""
+"""Exception class for authentication errors in the iLoveIMG API."""
 
 
 class AuthException(Exception):

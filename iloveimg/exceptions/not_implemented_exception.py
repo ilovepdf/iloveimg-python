@@ -1,4 +1,4 @@
-"""Exception definitions for unimplemented functionality."""
+"""Exception class for unimplemented functionality in the iLoveIMG API."""
 
 
 class NotImplementedException(Exception):

@@ -1,4 +1,4 @@
-"""Integer validation utilities for iloveimg-python library.
+"""Integer validation utilities for ilovepdf-python library.
 
 Provides the IntValidator class for validating integer values with various
 constraints (type, positive, range, options).
@@ -6,12 +6,12 @@ constraints (type, positive, range, options).
 
 from typing import Any
 
-from iloveimg.exceptions import (
+from ..exceptions import (
     IntNotInAllowedSetError,
     IntOutOfRangeError,
     NotAnIntError,
 )
-from iloveimg.validators.choice_validator import ChoiceValidator
+from . import ChoiceValidator
 
 
 class IntValidator:
@@ -20,6 +20,7 @@ class IntValidator:
     Provides static methods for validating:
     - Type validation (must be int)
     - Positive validation (must be > 0)
+    - Non-negative validation (must be >= 0)
     - Range validation (must be within min/max)
     - Options validation (must be in allowed set)
 
@@ -27,6 +28,7 @@ class IntValidator:
         validator = IntValidator()
         validator.validate_type(5)
         validator.validate_positive(10, "width")
+        validator.validate_non_negative(0, "count")
         validator.validate_range(50, 1, 100, "quality")
     """
 
@@ -71,6 +73,29 @@ class IntValidator:
             raise IntOutOfRangeError(
                 f"Invalid {param_name}: value must be a positive integer"
                 f" (greater than 0)."
+            )
+
+    @staticmethod
+    def validate_non_negative(value: Any, param_name: str = "parameter") -> None:
+        """Validates that a value is a non-negative integer
+
+        Args:
+            value (Any): Value to validate.
+            param_name (str, optional): Name of the parameter. Default is "parameter".
+
+        Raises:
+            NotAnIntError: If value is not an integer.
+            IntOutOfRangeError: If value is negative.
+
+        Example:
+            IntValidator.validate_non_negative(0)
+            IntValidator.validate_non_negative(5, "count")
+        """
+        IntValidator.validate_type(value, param_name)
+        if value < 0:
+            raise IntOutOfRangeError(
+                f"Invalid {param_name}: value must be a non-negative integer"
+                f" (0 or greater)."
             )
 
     @staticmethod

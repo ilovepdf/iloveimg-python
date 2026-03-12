@@ -12,8 +12,6 @@ from iloveimg.exceptions import (
 )
 from iloveimg.validators import ChoiceValidator
 
-# pylint: disable=protected-access,too-few-public-methods
-
 
 class TestChoiceValidatorBasic:
     """Tests for basic ChoiceValidator.validate() functionality."""

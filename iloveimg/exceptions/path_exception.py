@@ -1,4 +1,4 @@
-"""Module containing custom exceptions for path-related errors."""
+"""Exception class for path-related errors in the iLoveIMG API."""
 
 
 class PathException(Exception):
