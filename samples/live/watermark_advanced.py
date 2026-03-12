@@ -1,17 +1,15 @@
 """Advanced sample script for watermarking images using the iLoveIMG library.
 
 This script demonstrates advanced watermarking features with the WatermarkTask class,
-including text and image watermarks, custom positioning, font options, transparency,
-and mosaic effects.
+including multiple watermark elements, text and image watermarks, custom positioning,
+font options, transparency, mosaic, and more.
 """
 
 from iloveimg import WatermarkTask
 
-# To get your API key pair, visit: https://developer.iloveimg.com/user/projects
-task = WatermarkTask("project_public_id", "project_secret_key")
+task = WatermarkTask()
 
-# Add the image file to watermark.
-file = task.add_file("/path/to/input/image.jpg")
+file = task.add_file("tests/integration/files_samples/image_sample.jpg")
 
 # Example 1: Add a text watermark with advanced customization.
 text_element = task.add_element()
@@ -28,10 +26,12 @@ text_element.font_color = "#FF0000"
 text_element.transparency = 80
 text_element.mosaic = False
 
-# Example 2: Add an image watermark with mosaic effect.
+# Example 2: Add an image watermark with custom position and mosaic effect.
 image_element = task.add_element()
 image_element.type = "image"
-file_element = image_element.set_image("/path/to/watermark/image.png")
+file_element = image_element.set_image(
+    "tests/integration/files_samples/logo_iloveimg.jpg"
+)
 image_element.gravity = "NorthWest"
 image_element.x_pos_percent = 5
 image_element.y_pos_percent = 5
@@ -40,11 +40,6 @@ image_element.height_percent = 20
 image_element.transparency = 60
 image_element.mosaic = True
 
-# Execute the watermarking task.
 task.execute()
-
-# Set a custom output filename.
 task.set_output_filename("watermark_advanced.png")
-
-# Download the watermarked image to the specified folder.
-task.download("output_folder")
+task.download("output_live")
