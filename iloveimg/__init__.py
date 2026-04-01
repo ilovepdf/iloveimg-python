@@ -1,5 +1,7 @@
 """iloveimg package initialization."""
 
+__version__ = "1.0.0"
+
 from . import exceptions
 from .compress_task import CompressTask
 from .convert_task import ConvertTask

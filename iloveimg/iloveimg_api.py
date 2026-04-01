@@ -42,7 +42,7 @@ DEFAULT_TIMEOUT_SECONDS = int(os.environ.get("DEFAULT_TIMEOUT_SECONDS", 60))
 API_VERSION = "v1"
 START_SERVER_URL = os.environ.get("START_SERVER_URL", "https://api.ilovepdf.com")
 API_HOST = os.environ.get("API_HOST", "api.ilovepdf.com")
-LIBRARY_VERSION = "python.0.0.1"
+LIBRARY_VERSION = "python.1.0.0"
 
 # HTTP Status Codes
 HTTP_OK = 200
