@@ -2,7 +2,7 @@
 name = "iloveimg"
 description = "iLoveIMG Python API"
 version = "0.0.1"
-authors = [{ name = "iloveimg", email = "info@iloveimg.com" }]
+authors = [{ name = "iloveimg", email = "developer@ilovepdf.com" }]
 license = "MIT"
 readme = "README.md"
 
