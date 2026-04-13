@@ -92,8 +92,7 @@ class TestFloatValidator:
         with pytest.raises(
             InvalidChoiceError,
             match=(
-                r"Invalid value for quality: must be one of "
-                r"\[0\.5, 0\.8, 1\.0\]\."
+                r"Invalid value for quality: must be one of " r"\[0\.5, 0\.8, 1\.0\]\."
             ),
         ):
             FloatValidator.validate_options(0.7, {1.0, 0.8, 0.5}, "quality")
