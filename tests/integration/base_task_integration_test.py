@@ -247,9 +247,9 @@ class BaseTaskIntegrationTest(Generic[T]):
         self.task.download()
         self.downloaded_file = output_filename
 
-        assert os.path.exists(self.downloaded_file), (
-            f"Downloaded file '{self.downloaded_file}' does not exist."
-        )
-        assert os.path.getsize(self.downloaded_file) > 0, (
-            f"Downloaded file '{self.downloaded_file}' is empty."
-        )
+        assert os.path.exists(
+            self.downloaded_file
+        ), f"Downloaded file '{self.downloaded_file}' does not exist."
+        assert (
+            os.path.getsize(self.downloaded_file) > 0
+        ), f"Downloaded file '{self.downloaded_file}' is empty."
